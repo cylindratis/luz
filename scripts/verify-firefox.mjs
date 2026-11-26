@@ -5,6 +5,7 @@ import { createServer } from 'node:http';
 import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { firefox } from '../.firefox-qa/node_modules/playwright/index.mjs';
+import { corridors, locateCorridors } from '../dist/corredores.js';
 
 const root = fileURLToPath(new URL('../dist', import.meta.url));
 const pictures = new URL('../.firefox-qa/screenshots/', import.meta.url);
@@ -29,6 +30,20 @@ const fixture = async name => JSON.parse(await readFile(resolve(root, 'data', na
 const balance = await fixture('balance.json'), reservoirs = await fixture('reservoirs.json');
 const cut = await fixture('curtailment.json');
 const exchanges = await fixture('intercambios.json');
+const layers = await fixture('mapa/camadas.json');
+const transmission = layers.find(item => item.kind === 'line' && item.mode === 'existente');
+const segments = (await fixture(`mapa/${transmission.id}.json`)).map(([coords, attributes]) => ({ coords, attributes }));
+const matches = locateCorridors(segments);
+const byName = new Map(segments.map(segment => [segment.attributes.nome, segment.coords[0]]));
+assert.equal(matches.length, 4);
+matches.forEach((corridor, i) => {
+  assert.equal(corridor.traces.length, corridors[i].lines.length);
+  corridor.traces.forEach((trace, j) => {
+    const [name, reverse] = corridors[i].lines[j];
+    assert.equal(trace.name, name);
+    assert.deepEqual(trace.coordinates, reverse ? [...byName.get(name)].reverse() : byName.get(name));
+  });
+});
 const day = [cut.reference, balance.Data.slice(0, 10)].sort().at(-1);
 const instant = new Date(new Date(`${day}T18:00:00Z`).getTime() + 86400000);
 const rows = Array.from({ length: 901 }, (_, minute) => ({ c: [{ v: minute }, { v: 1000 + minute }] }));
@@ -128,6 +143,9 @@ try {
   assert.ok((await page.locator('.map-sidebar').boundingBox()).x >= 8);
   await page.locator('#map-flow-toggle').click();
   await page.locator('.exchange-region').first().waitFor();
+  const circuits = page.locator('.exchange-circuits li');
+  assert.equal(await circuits.count(), corridors.reduce((count, corridor) => count + corridor.lines.length, 0));
+  assert.match(await circuits.allTextContents().then(names => names.join(' ')), /colinas.*ribeiro gonçalves.*ibiúna.*bateias/);
   assert.equal(await page.locator('.exchange-region').count(), 4);
   const reference = page.locator('#map-flow-reference');
   assert.match(await reference.textContent(), /06:00.*18:00/);

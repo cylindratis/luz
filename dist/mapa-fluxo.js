@@ -1,5 +1,6 @@
 import { dateTime, getJSON, number, REGIONS, SOURCES } from './data.js';
 import { editorialCase } from './texto.js';
+import { corridorKey, locateCorridors } from './corredores.js';
 
 const positions = {
   norte: [-57, -5.3],
@@ -18,7 +19,7 @@ function signed(mw) {
     { sign: '−', label: 'déficit', type: 'negative' };
 }
 
-function summarizePeriod(reading) {
+function summarizePeriod(reading, corridors) {
   const regions = REGIONS.map(({ id }) => {
     const area = reading.regions[id];
     const mw = balance(area);
@@ -32,12 +33,37 @@ function summarizePeriod(reading) {
   }).join('');
   const links = reading.links.filter(link => link.mw > 0).map(link =>
     `<li><span>${shortNames[link.from]} <span aria-label="para">→</span> ${shortNames[link.to]}</span><strong>${asGW(link.mw)}</strong></li>`).join('');
+  const circuits = corridors.map(corridor => corridor.traces.map(trace => `<li>${editorialCase(trace.name)}</li>`).join('')).join('');
   return `<p class="exchange-key"><span><b class="exchange-positive">+</b> saída líquida</span><span><b class="exchange-negative">−</b> entrada líquida</span></p>
     ${regions}<details class="exchange-links"><summary>intercâmbios verificados</summary>
-    <ul>${links || '<li>sem intercâmbio líquido nas fronteiras</li>'}</ul></details>`;
+    <ul>${links || '<li>sem intercâmbio líquido nas fronteiras</li>'}</ul></details>
+    <details class="exchange-circuits"><summary>linhas de transmissão exibidas</summary><ul>${circuits}</ul></details>`;
 }
 
-export function initMapFlow(panel, onToggle) {
+function projectTrace(coordinates, project, backwards) {
+  const points = coordinates.map(project);
+  if (backwards) points.reverse();
+  const path = new Path2D();
+  path.moveTo(points[0].x, points[0].y);
+  const segments = [];
+  let length = 0;
+  for (let i = 1; i < points.length; i++) {
+    const { x, y } = points[i - 1];
+    const dx = points[i].x - x, dy = points[i].y - y;
+    path.lineTo(points[i].x, points[i].y);
+    const span = Math.hypot(dx, dy);
+    if (span) segments.push({ x, y, dx, dy, span, start: length });
+    length += span;
+  }
+  const target = length * .64;
+  const segment = segments.find(part => part.start + part.span >= target);
+  if (length < 14 || !segment) return { path };
+  const t = (target - segment.start) / segment.span;
+  return { path, marker: { x: segment.x + t * segment.dx, y: segment.y + t * segment.dy,
+    angle: Math.atan2(segment.dy, segment.dx) } };
+}
+
+export function initMapFlow(panel, onToggle, loadTransmission) {
   const canvas = panel.querySelector('#flow-map');
   const ctx = canvas.getContext('2d');
   const button = panel.querySelector('#map-flow-toggle');
@@ -47,53 +73,58 @@ export function initMapFlow(panel, onToggle) {
   const periodButtons = [...controls.querySelectorAll('[data-flow-period]')];
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let data, camera, palette, frame, period = 'dia', active = false, inView = true;
+  let corridors = [], traces = [];
+
+  function project([x, y]) {
+    return { x: camera.left + x * camera.scale, y: camera.top - y * camera.scale };
+  }
+
+  function projectPeriod() {
+    if (!active || !camera || !data) return;
+    const links = new Map(data[period].links.map(link => [corridorKey(link.from, link.to), link]));
+    traces = corridors.flatMap(corridor => {
+      const link = links.get(corridor.key);
+      if (!link?.mw) return [];
+      return corridor.traces.map((trace, i) => ({
+        ...projectTrace(trace.coordinates, project, corridor.from !== link.from),
+        phase: i * 4 % 18
+      }));
+    });
+  }
 
   function draw(time = 0) {
     frame = undefined;
     if (!active || !camera || !data) return;
-    const { width, height, ratio, left, top, scale } = camera;
+    const { width, height, ratio } = camera;
     const reading = data[period];
-    const screenPoint = ([x, y]) => ({ x: left + x * scale, y: top - y * scale });
     const motion = !reduced.matches;
     ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
     ctx.clearRect(0, 0, width, height);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
 
-    for (const { from, to, mw } of reading.links) {
-      if (mw <= 0) continue;
-      const start = screenPoint(positions[from]), end = screenPoint(positions[to]);
-      const dx = end.x - start.x, dy = end.y - start.y;
-      const facingNorth = start.y < end.y || (start.y === end.y && start.x < end.x);
-      const bend = facingNorth ? .14 : -.14;
-      const middle = { x: (start.x + end.x) / 2 - dy * bend, y: (start.y + end.y) / 2 + dx * bend };
-      const line = new Path2D();
-      line.moveTo(start.x, start.y);
-      line.quadraticCurveTo(middle.x, middle.y, end.x, end.y);
-      const lineWidth = Math.min(7, 1.7 + mw / 1500);
-      ctx.setLineDash([]);
-      ctx.strokeStyle = palette.outline;
-      ctx.lineWidth = lineWidth + 3;
-      ctx.stroke(line);
-      ctx.strokeStyle = palette.flow;
-      ctx.lineWidth = lineWidth;
-      ctx.setLineDash([12, 10]);
-      ctx.lineDashOffset = motion ? -(time * .060 % 22) : 0;
-      ctx.stroke(line);
-      ctx.setLineDash([]);
-
-      const t = .68, u = 1 - t;
-      const x = u * u * start.x + 2 * u * t * middle.x + t * t * end.x;
-      const y = u * u * start.y + 2 * u * t * middle.y + t * t * end.y;
-      const angle = Math.atan2(u * (middle.y - start.y) + t * (end.y - middle.y),
-        u * (middle.x - start.x) + t * (end.x - middle.x));
+    ctx.setLineDash([]);
+    ctx.strokeStyle = palette.outline;
+    ctx.lineWidth = 4.5;
+    for (const { path } of traces) ctx.stroke(path);
+    ctx.strokeStyle = palette.flow;
+    ctx.lineWidth = 2.4;
+    ctx.setLineDash([10, 8]);
+    for (const { path, phase } of traces) {
+      ctx.lineDashOffset = (motion ? -(time * .055 % 18) : 0) + phase;
+      ctx.stroke(path);
+    }
+    ctx.setLineDash([]);
+    for (const { marker } of traces) {
+      if (!marker) continue;
+      const { x, y, angle } = marker;
       ctx.save();
       ctx.translate(x, y);
       ctx.rotate(angle);
       ctx.beginPath();
-      ctx.moveTo(9, 0);
-      ctx.lineTo(-5, -6);
-      ctx.lineTo(-5, 6);
+      ctx.moveTo(6, 0);
+      ctx.lineTo(-4, -4);
+      ctx.lineTo(-4, 4);
       ctx.closePath();
       ctx.lineWidth = 2;
       ctx.strokeStyle = palette.outline;
@@ -104,7 +135,7 @@ export function initMapFlow(panel, onToggle) {
     }
 
     for (const { id } of REGIONS) {
-      const { x, y } = screenPoint(positions[id]);
+      const { x, y } = project(positions[id]);
       const state = signed(balance(reading.regions[id]));
       ctx.beginPath();
       ctx.arc(x, y, 12, 0, Math.PI * 2);
@@ -134,7 +165,8 @@ export function initMapFlow(panel, onToggle) {
     if (!reading) return;
     const overdue = Date.now() - Date.parse(reading.end) > 4 * 86400000;
     reference.textContent = `${dateTime(reading.start)} a ${dateTime(reading.end)} · brasília · médias do ONS${overdue ? ' · última leitura disponível' : ''}`;
-    details.innerHTML = summarizePeriod(reading);
+    details.innerHTML = summarizePeriod(reading, corridors);
+    projectPeriod();
     redraw();
   }
 
@@ -148,7 +180,10 @@ export function initMapFlow(panel, onToggle) {
       button.disabled = true;
       reference.textContent = 'carregando as médias do ONS…';
       try {
-        data = await getJSON('./data/intercambios.json');
+        const [published, transmission] = await Promise.all([getJSON('./data/intercambios.json'), loadTransmission()]);
+        corridors = locateCorridors(transmission);
+        if (corridors.some(corridor => !corridor.traces.length)) throw new Error('corredor sem traçado');
+        data = published;
       } catch {
         reference.textContent = 'dados indisponíveis. feche e reabra o painel para tentar novamente.';
       } finally {
@@ -180,6 +215,7 @@ export function initMapFlow(panel, onToggle) {
       const w = Math.round(view.width * view.ratio), h = Math.round(view.height * view.ratio);
       if (canvas.width !== w) canvas.width = w;
       if (canvas.height !== h) canvas.height = h;
+      projectPeriod();
       redraw();
     }
   };

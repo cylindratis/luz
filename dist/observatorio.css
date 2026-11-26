@@ -151,18 +151,21 @@ select { max-width: 100%; text-overflow: ellipsis; cursor: pointer; }
 .flow-period button[aria-pressed="true"] { background: var(--raised); border-color: var(--plot-blue); }
 .flow-period .icon { width: 16px; height: 16px; }
 .flow-reference,.exchange-key { font-size: 12px; }
+.flow-method { margin-top: 4px; }
 .exchange-key { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-block: 8px 5px; }
 .exchange-key b { font: 700 15px var(--mono); }
 .exchange-positive { color: var(--plot-green); }
 .exchange-negative { color: var(--plot-orange); }
-.exchange-region,.exchange-links { border-top: 1px solid var(--line); font-size: 12px; }
-.exchange-region summary,.exchange-links summary { min-height: 36px; align-content: center; cursor: pointer; list-style-position: inside; }
-.exchange-region summary:hover,.exchange-links summary:hover { background: var(--raised); }
+.exchange-region,.exchange-links,.exchange-circuits { border-top: 1px solid var(--line); font-size: 12px; }
+.exchange-region summary,.exchange-links summary,.exchange-circuits summary { min-height: 36px; align-content: center; cursor: pointer; list-style-position: inside; }
+.exchange-region summary:hover,.exchange-links summary:hover,.exchange-circuits summary:hover { background: var(--raised); }
 .exchange-region summary strong { float: right; margin-inline-start: 6px; font: 650 12px var(--mono); white-space: nowrap; }
 .exchange-region dl,.exchange-links ul { display: grid; gap: 4px; padding: 2px 0 8px; color: var(--muted); }
 .exchange-region dl > div,.exchange-links li { display: flex; justify-content: space-between; gap: 6px; }
 .exchange-region dd,.exchange-links li > strong { font: 550 11px var(--mono); white-space: nowrap; }
 .exchange-links { margin-top: 6px; }
+.exchange-circuits ul { padding: 2px 0 8px 16px; list-style: disc; color: var(--muted); }
+.exchange-circuits li { margin: 4px 0; }
 .map-zoom { position: absolute; display: flex; right: 12px; bottom: 12px; gap: 5px; }
 .map-zoom .control { min-width: 40px; }
 .map-feature { position: absolute; left: 12px; bottom: 59px; max-height: 70%; width: min(370px, calc(100% - 24px)); overflow: auto; padding: 13px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }

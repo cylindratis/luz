@@ -84,6 +84,10 @@ export function initMap(selectRegion) {
   const flow = initMapFlow(panel, active => {
     if (active) legendBeforeFlow = layersDisclosure.open;
     layersDisclosure.open = !active && (legendBeforeFlow || fullButton.getAttribute('aria-pressed') === 'true');
+  }, async () => {
+    const transmission = (await catalog).find(layer => layer.kind === 'line' && layer.mode === 'existente');
+    if (!transmission) throw new Error('linhas existentes indisponíveis');
+    return loadLayer(transmission);
   });
   const selectedLayers = new Set(['transmissão', 'UHE', 'eólicas', 'solares']);
   const requests = new Map();
@@ -315,8 +319,9 @@ export function initMap(selectRegion) {
   mapMode.addEventListener('change', () => { updateTooltip(mapMode, 'infraestrutura'); showFeature(null); renderLayers(); });
   new ResizeObserver(scheduleDraw).observe(wrap);
   document.addEventListener('themechange', scheduleDraw);
-  getJSON(metadataUrl).then(async catalog => {
-    layers = catalog;
+  const catalog = getJSON(metadataUrl);
+  catalog.then(async entries => {
+    layers = entries;
     const layer = layers.find(item => item.kind === 'polygon');
     regions = await loadLayer(layer);
     const categories = new Map(layers.filter(item => item.kind !== 'polygon').map(item => [item.name, item]));
