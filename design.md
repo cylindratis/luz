@@ -2,6 +2,11 @@
 name: "Elétrica.br · Setor elétrico brasileiro"
 description: "Leitura técnica do setor elétrico brasileiro em uma interface cybercore."
 colors:
+  light-ground: "#edf3f7"
+  light-surface: "#ffffff"
+  light-ink: "#142332"
+  light-muted: "#465b70"
+  light-line: "#c5d4e0"
   ground: "#080b10"
   surface: "#10161e"
   raised: "#17212b"
@@ -262,3 +267,7 @@ O diálogo informativo tem largura máxima de 560 px, superfície elevada pelo b
 - **Don't** acrescentar sombras aos painéis planos.
 - **Don't** transformar interligações esquemáticas em uma alegação de rotas físicas exatas.
 - **Don't** eliminar unidades, fonte ou período para tornar o painel mais limpo.
+
+## Atualização do panorama
+
+O bento centralizado abre com a cartografia da EPE: os traçados têm geometria real, a seleção do SIN atenua as demais regiões e a legenda distingue cadastro existente de expansão. O mapa oferece controles nativos, ampliação progressiva e tela cheia. Nas duas paletas, mapas e gráficos usam a mesma semântica de cor, com contraste ajustado ao fundo. Séries têm rótulo, unidade e uma alternativa em tabela. O histórico e os cenários ficam após o painel operacional, seguidos do rodapé expansível. Os slides Madrid mantêm a ordem original, com texto refluível e notas de consulta.

@@ -1,4 +1,9 @@
 import { BALANCE_URL, RESERVOIR_URL, REGIONS, selectBalance, validateBalance, normalizeReservoirs, freshness, getJSON, number, sourcePower, dateTime, civilDate } from './data.js';
+import { initMap } from './mapa.js';
+import { initHistorical, initPlans } from './graficos.js';
+import { initOperation } from './operacao.js';
+import { loadMadrid, renderMadrid } from './madrid.js';
+import { editorialCase, normalizeText } from './texto.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -6,13 +11,16 @@ const esc = value => String(value ?? '').replace(/[&<>"']/g, s => ({ '&':'&amp;'
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 let rawBalance, reservoirs, editorial, currentRegion = 'brasil', balanceMode = 'loading', reservoirMode = 'loading', refreshing = false, lastReservoirQuery = 0;
 let currentChapter = 'introducao', slideIndex = 0, previousFocus;
+let madrid = [];
+const map = initMap(selectRegion);
+const operation = initOperation();
 const stateMessages = { loading: 'Consultando ONS', live: 'Conectado ao ONS', stale: 'Medição defasada', saved: 'Leitura salva', error: 'Fonte indisponível' };
 
 function renderBalance() {
   const status = $('#connection-status');
   const state = rawBalance && balanceMode === 'live' && freshness(rawBalance.Data).stale ? 'stale' : balanceMode;
   status.className = `status is-${state}`;
-  status.innerHTML = `<span></span>${stateMessages[state]}`;
+  status.innerHTML = `<span></span>${editorialCase(stateMessages[state])}`;
   if (!rawBalance) return;
   const data = selectBalance(rawBalance, currentRegion);
   $('#generation-value').textContent = number(data.total / 1000);
@@ -29,7 +37,6 @@ function renderBalance() {
     if (!negativeNote) { negativeNote = document.createElement('p'); negativeNote.className = 'source-negative'; $('#source-list').after(negativeNote); }
     negativeNote.textContent = 'Resíduo negativo da fonte preservado; barras partem de zero.';
   } else negativeNote?.remove();
-  for (const { id } of REGIONS) $(`[data-node-load="${id}"]`).textContent = `${number(rawBalance[id].cargaVerificada / 1000)} GW de carga`;
   const prefix = state === 'saved' ? 'Leitura salva' : state === 'stale' ? 'Medição defasada' : 'Medição ONS';
   $('#balance-reference').textContent = `${prefix}: ${dateTime(data.date)} (Brasília). Consulta automática a cada 60 s.`;
   const notice = $('#fetch-notice');
@@ -37,7 +44,7 @@ function renderBalance() {
   if (state === 'saved') notice.textContent = 'A consulta ao ONS não foi concluída. Exibindo a última leitura disponível, com a data acima. Use Atualizar para tentar novamente.';
   if (state === 'stale') notice.textContent = 'O ONS respondeu, mas o horário da medição está defasado em mais de 15 minutos ou é incompatível com o relógio. A próxima consulta ocorrerá automaticamente.';
   renderFlows();
-  if ($('#presentation').open && slideIndex === 1) renderSlide();
+  normalizeText($('.system-section'));
 }
 function renderReservoirs() {
   if (!reservoirs) return;
@@ -48,12 +55,15 @@ function renderReservoirs() {
   $('#reservoirs').innerHTML = REGIONS.map(region => `<div class="reservoir-cell ${region.id === currentRegion ? 'selected' : ''}"><div><span>${region.short}</span><strong>${number(reservoirs.regions[region.id].percent)}<small>%</small></strong></div><div class="reservoir-track"><span style="width:${reservoirs.regions[region.id].percent}%"></span></div></div>`).join('');
   const old = Date.now() - Date.parse(reservoirs.date + 'T12:00:00-03:00') > 4 * 86400000;
   $('#reservoir-reference').textContent = `ONS · ${civilDate(reservoirs.date)} de ${reservoirs.date.slice(0, 4)} · referência diária${reservoirMode !== 'live' ? ' · leitura salva' : ''}${old ? ' · referência antiga' : ''}`;
+  normalizeText($('.reservoir-panel'));
 }
 function selectRegion(id) {
   currentRegion = id;
   $$('[data-region]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.region === id)));
+  map.setRegion(id);
+  operation.setRegion(id);
   renderBalance(); renderReservoirs();
-  $('#announcer').textContent = `Subsistema selecionado: ${id === 'brasil' ? 'Brasil' : REGIONS.find(r => r.id === id).name}`;
+  $('#announcer').textContent = editorialCase(`Subsistema selecionado: ${id === 'brasil' ? 'Brasil' : REGIONS.find(r => r.id === id).name}`);
 }
 function renderFlows() {
   if (!rawBalance) return;
@@ -64,7 +74,7 @@ function renderFlows() {
     $('#fetch-notice').after(disclosure);
   }
   $('.flow-table').innerHTML = `<div class="flow-table-head"><span>Subsistema</span><span>Importação</span><span>Exportação</span></div>` + REGIONS.map(r => `<div><span>${r.name}</span><span>${number(rawBalance[r.id].importacao / 1000, 2)} GW</span><span>${number(rawBalance[r.id].exportacao / 1000, 2)} GW</span></div>`).join('');
-  $('.flow-note').textContent = `ONS · ${dateTime(rawBalance.Data)} (Brasília). Valores agregados por subsistema. O mapa representa conexões esquemáticas; não indica os fluxos de cada linha.`;
+  $('.flow-note').textContent = `ONS · ${dateTime(rawBalance.Data)} (Brasília). Valores agregados por subsistema. O mapa mostra infraestrutura cadastrada pela EPE.`;
 }
 async function refreshData(force = false) {
   if (refreshing) return;
@@ -75,8 +85,10 @@ async function refreshData(force = false) {
   await Promise.allSettled(jobs);
   refreshing = false; $('#refresh').disabled = false;
   renderBalance(); renderReservoirs();
+  operation.refresh(rawBalance?.Data);
   if (!rawBalance) { $('#source-list').innerHTML = '<p class="loading-copy">Não foi possível obter o balanço. Use Atualizar para tentar novamente.</p>'; $('#balance-reference').textContent = 'Balanço indisponível. Nenhum valor foi estimado.'; }
   if (!reservoirs) { $('#reservoirs').innerHTML = '<p class="loading-copy">Reservatórios indisponíveis. Use Atualizar para tentar novamente.</p>'; $('#ear-value').textContent = '—'; }
+  normalizeText($('.system-section'));
 }
 
 const introductoryChapter = () => ({ id:'introducao', title:'O problema da coordenação', claim:editorial.research.question, summary:editorial.research.hypothesis, points:[editorial.research.mechanism,editorial.research.failure,`Método: ${editorial.research.method}`], pages:[3,4,5] });
@@ -84,8 +96,7 @@ function allChapters() { return editorial ? [introductoryChapter(), ...editorial
 function renderEditorialNavigation() {
   const chapters = allChapters();
   $('#chapter-nav').innerHTML = chapters.map(ch => `<a href="#trabalho/${ch.id}" data-chapter="${ch.id}">${esc(ch.id === 'introducao' ? 'Pergunta e hipótese' : ch.title)}</a>`).join('');
-  const previewIds = ['fundamentos','estrutura','operacao','regulacao','itaipu','transicao'];
-  $('#chapter-preview').innerHTML = previewIds.map(id => { const ch = chapters.find(c=>c.id===id); return `<a href="#trabalho/${id}" class="preview-link"><span>${esc(ch.title)}<small>${esc(ch.originalTitle)}</small></span>${icon('plus')}</a>`; }).join('');
+  normalizeText($('#chapter-nav'));
 }
 function renderChapter(id) {
   if (!editorial) { $('#chapter-content').innerHTML = '<p>Carregando os capítulos do trabalho…</p>'; return; }
@@ -105,58 +116,51 @@ function renderChapter(id) {
   const idx = chapters.indexOf(ch), previous = chapters[idx-1], next = chapters[idx+1];
   $('#chapter-content').innerHTML = `<h2>${esc(ch.title)}</h2><p class="chapter-lead">${esc(ch.claim)}</p><p>${esc(ch.summary)}</p>${extra}<h3>${ch.id==='introducao'?'Como a pesquisa se organiza':'Pontos para a apresentação'}</h3><ul>${ch.points.map(p=>`<li>${esc(p)}</li>`).join('')}</ul><p class="chapter-source">Síntese do trabalho original · páginas impressas ${ch.pages[0]}–${ch.pages.at(-1)} · recorte documental até 24/11/2026. <a href="./assets/trabalho.pdf#page=${ch.pages[0]+1}" target="_blank" rel="noopener">Conferir no PDF</a></p><nav class="chapter-pagination" aria-label="Avançar no trabalho">${previous ? `<a href="#trabalho/${previous.id}">Anterior: ${esc(previous.title)}</a>` : '<span></span>'}${next ? `<a href="#trabalho/${next.id}">Próximo: ${esc(next.title)}</a>` : '<a href="#fontes">Fontes e notas</a>'}</nav>`;
   if (ch.id === 'estrutura') selectSegment(editorial.segments[0].id);
+  normalizeText($('#chapter-content'));
 }
 function selectSegment(id, focus = false) {
   const s = editorial.segments.find(s=>s.id===id); if (!s) return;
   $$('[data-segment]').forEach(button=>{const selected=button.dataset.segment===id;button.setAttribute('aria-selected',String(selected));button.tabIndex=selected?0:-1;if(selected&&focus)button.focus();});
   $('#segment-detail').setAttribute('aria-labelledby','tab-'+id);
   $('#segment-detail').innerHTML = `<h3>${esc(s.job)}</h3><dl><dt>Mercado</dt><dd>${esc(s.market)}</dd><dt>Restrição</dt><dd>${esc(s.constraint)}</dd><dt>Como medir</dt><dd>${esc(s.measure)}</dd><dt>Qualidade</dt><dd>${esc(s.quality)}</dd></dl>`;
+  normalizeText($('#segment-detail'));
 }
 let activeView = '';
 function route({ focus = false } = {}) {
   const [requested, id] = location.hash.slice(1).split('/');
-  const view = ['panorama','trabalho','fontes'].includes(requested) ? requested : 'panorama';
-  for (const name of ['panorama','trabalho','fontes']) $('#view-'+name).hidden = view !== name;
+  const section = ['historico', 'planejamento', 'cut-title', 'curve-title', 'fontes'].includes(requested) ? document.getElementById(requested) : null;
+  const view = requested === 'trabalho' ? 'trabalho' : requested === 'fontes' && activeView ? activeView : 'panorama';
+  for (const name of ['panorama','trabalho']) $('#view-'+name).hidden = view !== name;
   $$('[data-route]').forEach(a=>{a.removeAttribute('aria-current');if(a.dataset.route===view)a.setAttribute('aria-current','page');});
-  if (view === 'trabalho') renderChapter(id || 'introducao');
-  if (activeView !== view || view === 'trabalho') window.scrollTo({top:0,behavior:'instant'});
+  if (view === 'trabalho' && requested === 'trabalho') renderChapter(id || 'introducao');
+  if (!section && (activeView !== view || view === 'trabalho')) window.scrollTo({top:0,behavior:'instant'});
   activeView = view;
-  if (focus) { $('#conteudo').focus({preventScroll:true}); }
-  const title = view==='trabalho' ? allChapters().find(c=>c.id===currentChapter)?.title || 'O trabalho' : view==='fontes'?'Fontes e notas':'Setor elétrico brasileiro';
-  document.title = `${title} | Economia Industrial`;
+  if (requested === 'fontes') section.open = true;
+  if (section) requestAnimationFrame(() => section.scrollIntoView({ block: 'start' }));
+  else if (focus) $('#conteudo').focus({preventScroll:true});
+  const title = view==='trabalho' ? allChapters().find(c=>c.id===currentChapter)?.title || 'o trabalho' : 'setor elétrico brasileiro';
+  document.title = editorialCase(`${title} | economia industrial`);
 }
 
-function slides() {
-  const measured = rawBalance ? selectBalance(rawBalance) : null;
-  return [
-    {title:'Setor elétrico brasileiro.',lead:'Regulação, desenho de mercado e coordenação do suprimento.',cover:true,source:'UFRGS · Economia Industrial · Porto Alegre · 2026'},
-    {title:'O equilíbrio acontece agora.',lead:'Geração e consumo precisam se encontrar a cada instante.',items:measured?[{value:number(measured.total/1000)+' GW',text:'Geração instantânea no SIN'},{value:number(measured.load/1000)+' GW',text:'Carga verificada'},{value:'4',text:'Subsistemas interligados'}]:[{title:'Fonte indisponível',text:'Consulte o painel e tente atualizar.'}],source:rawBalance?`ONS · ${dateTime(rawBalance.Data)} (Brasília) · ${balanceMode==='live'&&!freshness(rawBalance.Data).stale?'consulta atual':'leitura salva ou defasada'}`:'Sem leitura válida do ONS.'},
-    {title:'O problema é coordenar.',lead:editorial.research.question,items:[{title:'Planejamento',text:'Antecipar usinas, linhas e a demanda.'},{title:'Contratação',text:'Distribuir receitas, obrigações e riscos.'},{title:'Operação',text:'Equilibrar o sistema sob restrições físicas.'}],source:'Trabalho original, pp. 3–5.'},
-    {title:'Por que regular?',lead:'As características econômicas mudam de um elo para outro.',items:[{title:'Economias de rede',text:'Duplicar infraestrutura pode aumentar o custo total.'},{title:'Assimetria de informação',text:'Custos e esforço não são plenamente observáveis.'},{title:'Incentivos e qualidade',text:'Produtividade precisa caminhar com continuidade.'}],source:'Trabalho original, pp. 6–10. Baumol; Laffont e Tirole; Joskow.'},
-    {title:'A história redefine os riscos.',lead:'De redes locais à expansão estatal e à separação de funções.',items:[{value:'1934',text:'Código de Águas e regulação federal.'},{value:'1996–98',text:'Instituição de ANEEL e ONS.'},{value:'2001–04',text:'Racionamento, novo modelo, ACR e ACL.'}],source:'Trabalho original, pp. 11–15.'},
-    {title:'Quatro elos, regras distintas.',lead:'Geração, transmissão, distribuição e comercialização.',items:[{title:'Geração e contratos',text:'Competição condicionada ao acesso à rede e à entrega.'},{title:'Transmissão',text:'Concessões, disponibilidade e receita regulada.'},{title:'Distribuição',text:'Rede local, tarifa e metas de qualidade.'}],source:'Trabalho original, pp. 16–21. Concentração depende do universo medido.'},
-    {title:'A água também vale amanhã.',lead:'O despacho coordena recursos presentes e o custo de usá-los no futuro.',items:[{title:'ONS',text:'Coordena a operação da geração e da transmissão.'},{title:'CCEE',text:'Registra contratos, contabiliza e liquida diferenças.'},{title:'ANEEL',text:'Regula e fiscaliza tarifas, qualidade e remuneração.'}],source:'Trabalho original, pp. 22–26. Contratos não definem uma rota exclusiva para os elétrons.'},
-    {title:'Quem contrata, quem paga?',lead:'O preço da energia é uma parte da fatura.',items:[{title:'ACR',text:'Contratação regulada para consumidores cativos.'},{title:'ACL',text:'Negociação de fornecimento e gestão dos riscos.'},{title:'Rede e encargos',text:'Continuam existindo em ambos os ambientes.'}],source:'Trabalho original, pp. 27–31. Regras conforme o recorte de 24/11/2026.'},
-    {title:'Itaipu: energia e tratado.',lead:'Direitos paritários, entrega efetiva e infraestrutura binacional.',items:[{value:'14 GW',text:'Potência nominal instalada.'},{value:'46,68 TWh',text:'Suprimento à ENBPar, Brasil, em 2025.'},{value:'25,77 TWh',text:'Suprimento à ANDE, Paraguai, em 2025.'}],source:'Trabalho original, pp. 32–35. Itaipu Binacional. Energia suprida não é geração bruta; entrega não equivale à divisão dos direitos.'},
-    {title:'A rede atravessa fronteiras.',lead:'A conexão física precisa de regras e operação compatíveis.',items:[{title:'Argentina',text:'Garabi I e II: 1.100 MW nominais cada.'},{title:'Uruguai',text:'Melo: 500 MW; Rivera: 70 MW nominais.'},{title:'Paraguai',text:'Itaipu tem regime próprio de contratação.'}],source:'Trabalho original, pp. 36–39. Potência nominal não assegura disponibilidade a cada hora.'},
-    {title:'Expandir exige flexibilidade.',lead:'Mais capacidade renovável precisa se transformar em energia aproveitada.',items:[{value:'86,6%',text:'Renováveis na oferta elétrica de 2025, BEN final.'},{title:'Curtailment',text:'Rede, segurança ou carga podem limitar a geração.'},{title:'Novas cargas',text:'Pedidos de conexão não equivalem a consumo observado.'}],source:'Trabalho original, pp. 40–43 e 61. Valor histórico; introdução usa 86,8% da síntese, substituído pelo BEN final.'},
-    {title:'Coordenar para entregar.',lead:editorial.presentationClosing.statement,items:[{title:'ODS 7',text:'Acesso, custo, renováveis e eficiência.'},{title:'ODS 9',text:'Infraestrutura resiliente e inovação.'},{title:'ODS 13',text:'Clima no planejamento e na operação.'}],source:'Considerações finais, pp. 44–45. Pesquisa documental e descritiva, sem identificação causal.'},
-    {title:'Uma pergunta para a turma.',lead:editorial.presentationClosing.discussion,items:[{title:'Fontes',text:'Trabalho original, ONS, ANEEL, EPE e referências do PDF.'},{title:'Limites',text:'Dados históricos, indicadores parciais e cenários identificados.'},{title:'Consulta',text:'Abra Fontes e notas para conferir a metodologia.'}],source:'Referências completas: PDF, pp. 46–60. Pendências: Apêndice B, p. 62.'}
-  ];
-}
+function slides() { return madrid; }
+
 function renderSlide() {
-  if (!editorial) return;
-  const list=slides(), slide=list[slideIndex];
-  $('#slide-stage').className='slide-stage'+(slide.cover?' slide-cover':'');
-  $('#slide-stage').innerHTML=`<h2 id="slide-title" tabindex="-1">${esc(slide.title)}</h2><p class="slide-lead">${esc(slide.lead)}</p>${slide.items?`<div class="slide-body">${slide.items.map(i=>`<article>${i.value?`<strong>${esc(i.value)}</strong>`:`<h3>${esc(i.title)}</h3>`}<p>${esc(i.text)}</p></article>`).join('')}</div>`:''}<p class="slide-source">${esc(slide.source)}</p>${slide.cover?'<div class="cover-pixel" aria-hidden="true">SIN / BR</div>':''}`;
-  $('#slide-counter').textContent=`${slideIndex+1} / ${list.length}`;
-  $('#previous-slide').disabled=slideIndex===0; $('#next-slide').disabled=slideIndex===list.length-1;
-  $('#slide-progress').innerHTML=list.map((_,i)=>`<span class="${i<=slideIndex?'done':''}"></span>`).join('');
-  $('#slide-context').textContent=slideIndex===0?'Economia Industrial · UFRGS':slide.title;
-  $('#presentation').scrollTop=0;
+  const slide = madrid[slideIndex];
+  if (!slide) return;
+  renderMadrid($('#slide-stage'), slide, closePresentation);
+  $('#slide-counter').textContent = `${slideIndex + 1} / ${madrid.length}`;
+  $('#previous-slide').disabled = slideIndex === 0;
+  $('#next-slide').disabled = slideIndex === madrid.length - 1;
+  $('#slide-progress').replaceChildren(...madrid.map((_, i) => {
+    const mark = document.createElement('span');
+    if (i <= slideIndex) mark.className = 'done';
+    return mark;
+  }));
+  $('#slide-context').textContent = slide.block;
+  $('#presentation').scrollTop = 0;
 }
 function changeSlide(delta) { const next=Math.min(Math.max(0,slideIndex+delta),slides().length-1); if(next!==slideIndex){slideIndex=next;renderSlide();$('#slide-title').focus({preventScroll:true});} }
-function openPresentation() { if(!editorial)return;previousFocus=document.activeElement;slideIndex=0;renderSlide();$('#presentation').showModal();document.body.style.overflow='hidden';$('#close-presentation').focus(); }
+function openPresentation() { if(!madrid.length || document.fullscreenElement || document.querySelector('.map-expanded'))return;previousFocus=document.activeElement;slideIndex=0;renderSlide();$('#presentation').showModal();document.body.style.overflow='hidden';$('#close-presentation').focus(); }
 function closePresentation() { $('#presentation').close();document.body.style.overflow='';previousFocus?.focus(); }
 
 document.addEventListener('click', event=>{
@@ -188,10 +192,39 @@ async function init() {
     getJSON('./data/balance.json').then(validateBalance).then(raw=>{rawBalance=raw;balanceMode='saved';renderBalance();}),
     getJSON('./data/reservoirs.json').then(normalizeReservoirs).then(data=>{reservoirs=data;reservoirMode='saved';renderReservoirs();}),
     getJSON('./data/editorial.json').then(data=>{editorial=data;renderEditorialNavigation();route();}),
-    fetch('./assets/brasil.svg').then(r=>{if(!r.ok)throw new Error('Mapa indisponível');return r.text();}).then(svg=>{$('#map-art').innerHTML=svg;}),
-    getJSON('./data/capacity.json').then(data=>{$('#capacity-data').innerHTML=`<div class="capacity-number">${number(data.totalMW/1000)} <small>GW</small></div><div class="capacity-rows">${data.groups.map(g=>`<div><span>${esc(g.type)} · ${esc(g.origin)}</span><strong>${number(g.mw/1000,2)} GW</strong></div>`).join('')}</div>`;})
+    loadMadrid().then(slides => { madrid = slides; $('#present').disabled = false; }),
+    getJSON('./data/capacity.json').then(data=>{$('#capacity-data').innerHTML=`<div class="capacity-number">${number(data.totalMW/1000)} <small>GW</small></div><div class="capacity-rows">${data.groups.map(g=>`<div><span>${esc(g.type)} · ${esc(g.origin)}</span><strong>${number(g.mw/1000,2)} GW</strong></div>`).join('')}</div>`; normalizeText($('#capacity-data'));})
   ]);
-  local.forEach((result,i)=>{if(result.status==='rejected'){console.warn('Recurso local indisponível:',i,result.reason.message);if(i===2){$('#present').disabled=true;$('#chapter-content').innerHTML='<p>Os capítulos não carregaram. <a href="./assets/trabalho.pdf">Abra o trabalho em PDF.</a></p>';}if(i===4)$('#capacity-data').innerHTML='<p>A leitura de capacidade não carregou. Consulte a fonte abaixo.</p>';}});
+  local.forEach((result, i) => {
+    if (result.status !== 'rejected') return;
+    console.warn('recurso local indisponível', i, result.reason.message);
+    if (i === 2) $('#chapter-content').innerHTML = '<p>capítulos indisponíveis. <a href="./assets/trabalho.pdf">abra o trabalho em PDF.</a></p>';
+    if (i === 3) $('#present').textContent = 'apresentação indisponível';
+    if (i === 4) $('#capacity-data').textContent = 'a leitura de capacidade não carregou. consulte a fonte abaixo.';
+  });
   await refreshData();
 }
+function setTheme(theme) {
+  const light = theme === 'claro';
+  document.documentElement.dataset.theme = light ? 'claro' : 'eletrica';
+  $('#theme-toggle').textContent = light ? 'modo escuro' : 'modo claro';
+  $('#theme-toggle').setAttribute('aria-pressed', String(light));
+  $('meta[name="theme-color"]').content = light ? '#edf3f7' : '#080b10';
+  try { localStorage.setItem('luz-tema', theme); } catch {}
+  document.dispatchEvent(new Event('themechange'));
+}
+
+let savedTheme;
+try { savedTheme = localStorage.getItem('luz-tema'); } catch {}
+setTheme(savedTheme);
+$('#theme-toggle').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'claro' ? 'eletrica' : 'claro'));
+$('#present').disabled = true;
+normalizeText(document.body);
+document.addEventListener('click', event => {
+  if (!event.target.closest('a[href="#fontes"]')) return;
+  $('#fontes').open = true;
+  if (location.hash === '#fontes') requestAnimationFrame(() => $('#fontes').scrollIntoView({ block: 'start' }));
+});
+initHistorical().catch(() => { $('#history-chart').textContent = 'série histórica indisponível.'; $('#sankey-chart').textContent = 'fluxo histórico indisponível.'; });
+initPlans().catch(() => { $('#plan-charts').textContent = 'cenários da EPE indisponíveis.'; });
 init();

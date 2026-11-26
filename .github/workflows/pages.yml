@@ -3,6 +3,8 @@ name: Publicar site no GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '31 13 * * *'
   workflow_dispatch:
 
 permissions:
@@ -15,7 +17,30 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  verify:
+    name: Firefox no Linux
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Instalar Firefox de teste
+        run: |
+          npm install --prefix .firefox-qa --no-save --package-lock=false playwright@1.57.0
+          node .firefox-qa/node_modules/playwright/cli.js install --with-deps firefox
+      - name: Verificar a apresentação e os dados
+        run: |
+          npm run check
+          node scripts/verify-firefox.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: firefox-linux
+          path: .firefox-qa/screenshots/
+          if-no-files-found: ignore
   deploy:
+    needs: verify
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
@@ -23,6 +48,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Atualizar os cortes de geração do ONS
+        run: |
+          if timeout 6m python3 scripts/prepare-curtailment.py --out "$RUNNER_TEMP/curtailment.json"; then
+            cp "$RUNNER_TEMP/curtailment.json" dist/data/curtailment.json
+          else
+            echo '::warning::ONS indisponível. Mantida a leitura de curtailment incluída no repositório.'
+          fi
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist

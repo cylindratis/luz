@@ -3,3 +3,8 @@ node_modules/
 .impeccable/review/
 *.tar.gz
 *.log
+.python-deps/
+.firefox-qa/
+.openai/
+.taste-skill/
+__pycache__/
