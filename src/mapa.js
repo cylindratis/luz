@@ -1,6 +1,7 @@
 import { getJSON, number, REGIONS } from './data.js';
 import { editorialCase } from './texto.js';
 import { initFullscreen } from './tela-cheia.js';
+import { initMapFlow } from './mapa-fluxo.js';
 
 const metadataUrl = './data/mapa/camadas.json';
 const regionIds = { N: 'norte', NE: 'nordeste', 'SE-CO': 'sudesteECentroOeste', S: 'sul' };
@@ -16,6 +17,14 @@ const layerColors = {
   UHE: '--hydro', PCH: '--hydro', CGH: '--hydro', eólicas: '--wind', solares: '--solar',
   biomassa: '--wind', 'térmicas fósseis': '--thermal', nucleares: '--thermal'
 };
+const layerNames = { UHE: ['usinas hidrelétricas', 'water'], PCH: ['pequenas centrais hidrelétricas', 'water'],
+  CGH: ['centrais geradoras hidrelétricas', 'water'], eólicas: ['usinas eólicas', 'wind'],
+  solares: ['usinas solares', 'solar'], biomassa: ['usinas a biomassa', 'biomass'],
+  'térmicas fósseis': ['termelétricas fósseis', 'thermal'], nucleares: ['usinas nucleares', 'nuclear'],
+  transmissão: ['linhas de transmissão', 'grid'], subestações: ['subestações', 'station'],
+  'sistemas isolados': ['sistemas isolados', 'distributed'] };
+const lineWidths = [.8, 1.05, 1.6, 2.35];
+const voltageClass = voltage => !voltage ? 0 : voltage <= 230 ? 1 : voltage < 500 ? 2 : 3;
 
 function makePath(parts) {
   const path = new Path2D();
@@ -71,6 +80,11 @@ export function initMap(selectRegion) {
   const feature = document.querySelector('#map-feature');
   const fullButton = document.querySelector('#map-fullscreen');
   const layersDisclosure = menu.closest('details');
+  let legendBeforeFlow;
+  const flow = initMapFlow(panel, active => {
+    if (active) legendBeforeFlow = layersDisclosure.open;
+    layersDisclosure.open = !active && (legendBeforeFlow || fullButton.getAttribute('aria-pressed') === 'true');
+  });
   const selectedLayers = new Set(['transmissão', 'UHE', 'eólicas', 'solares']);
   const requests = new Map();
   const loaded = new Map();
@@ -127,7 +141,7 @@ export function initMap(selectRegion) {
       for (const item of visible) {
         ctx.strokeStyle = ctx.fillStyle = color(item.layer.mode === 'planejada' ? '--map-planned' : layerColors[item.layer.name]);
         if (item.layer.kind === 'line') {
-          ctx.lineWidth = (item.layer.mode === 'planejada' ? 1.1 : .82) / scale;
+          ctx.lineWidth = lineWidths[voltageClass(item.attributes.tensao)] / scale;
           ctx.setLineDash(item.layer.mode === 'planejada' ? [3 / scale, 2 / scale] : []);
           ctx.stroke(item.path);
         } else {
@@ -149,6 +163,7 @@ export function initMap(selectRegion) {
     }
     ctx.globalAlpha = 1;
     ctx.setLineDash([]);
+    flow.sync({ width, height, ratio, scale, left, top }, color);
   }
 
   function loadLayer(layer) {
@@ -253,7 +268,7 @@ export function initMap(selectRegion) {
   let previouslyOpen;
   initFullscreen(fullButton, active => {
     if (active) previouslyOpen = layersDisclosure.open;
-    layersDisclosure.open = active || previouslyOpen;
+    layersDisclosure.open = !flow.active && (active || previouslyOpen);
     scheduleDraw();
   });
   for (const [id, factor] of [['map-add', 1.35], ['map-sub', 1 / 1.35]]) {
@@ -292,7 +307,12 @@ export function initMap(selectRegion) {
     changeZoom(event.deltaY < 0 ? 1.15 : 1 / 1.15, event.offsetX, event.offsetY);
   }, { passive: false });
   mapRegion.addEventListener('change', () => selectRegion(mapRegion.value));
-  mapMode.addEventListener('change', () => { showFeature(null); renderLayers(); });
+  function updateTooltip(control, label) {
+    control.title = `${label} · ${control.selectedOptions[0].textContent}`;
+  }
+  updateTooltip(mapRegion, 'subsistema');
+  updateTooltip(mapMode, 'infraestrutura');
+  mapMode.addEventListener('change', () => { updateTooltip(mapMode, 'infraestrutura'); showFeature(null); renderLayers(); });
   new ResizeObserver(scheduleDraw).observe(wrap);
   document.addEventListener('themechange', scheduleDraw);
   getJSON(metadataUrl).then(async catalog => {
@@ -317,9 +337,21 @@ export function initMap(selectRegion) {
         showFeature(null);
         renderLayers();
       });
-      label.append(input, swatch, editorialCase(name));
+      const [labelText, icon] = layerNames[name];
+      const symbol = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+      symbol.classList.add('icon');
+      symbol.setAttribute('aria-hidden', 'true');
+      const use = document.createElementNS(symbol.namespaceURI, 'use');
+      use.setAttribute('href', `#i-${icon}`);
+      symbol.append(use);
+      label.append(input, symbol, swatch, labelText);
       menu.append(label);
     }
+    const voltage = document.createElement('div');
+    voltage.className = 'voltage-key';
+    voltage.innerHTML = '<p>tensão nominal</p>' + ['sem valor informado', 'até 230 kV', '231 a 499 kV', '500 kV ou mais']
+      .map((name, i) => `<span><i aria-hidden="true" style="--line-weight:${lineWidths[i]}px"></i>${name}</span>`).join('');
+    menu.append(voltage);
     await renderLayers();
   }).catch(() => showFeedback('mapa indisponível no momento'));
 
@@ -327,8 +359,9 @@ export function initMap(selectRegion) {
     setRegion(id) {
       region = id;
       mapRegion.value = id;
+      updateTooltip(mapRegion, 'subsistema');
       showFeature(null);
-      canvas.setAttribute('aria-label', `rede elétrica da EPE · ${editorialCase(REGIONS.find(r => r.id === id)?.name || 'SIN')}. use as setas para deslocar.`);
+      canvas.setAttribute('aria-label', `sistema interligado nacional · ${editorialCase(REGIONS.find(r => r.id === id)?.name || 'SIN')}. use as setas para deslocar.`);
       scheduleDraw();
     }
   };

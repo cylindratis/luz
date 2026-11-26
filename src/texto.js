@@ -18,7 +18,7 @@ export function editorialCase(value) {
 export function normalizeText(root) {
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   for (let node = walker.nextNode(); node; node = walker.nextNode()) {
-    if (node.parentElement.closest('script,style,svg')) continue;
+    if (node.parentElement.closest('script,style,svg,[data-preserve-case]')) continue;
     const value = editorialCase(node.textContent);
     if (node.data !== value) node.data = value;
   }

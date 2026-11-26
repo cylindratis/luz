@@ -9,6 +9,7 @@ export function initFullscreen(button, onChange = () => {}) {
     active = expanded;
     button.setAttribute('aria-pressed', String(active));
     label.textContent = active ? 'sair da tela cheia' : 'tela cheia';
+    if (button.hasAttribute('title')) button.title = label.textContent;
     button.querySelector('use').setAttribute('href', active ? '#i-collapse' : '#i-fullscreen');
     onChange(active);
     button.focus({ preventScroll: true });

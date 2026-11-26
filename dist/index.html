@@ -20,26 +20,37 @@
     <div id="view-panorama" class="view">
       <section class="system-section" aria-labelledby="system-heading">
         <div class="section-toolbar">
-          <h1 id="system-heading">setor elétrico brasileiro</h1>
+          <div><h1 id="system-heading">setor elétrico brasileiro</h1><p class="panorama-byline">por guilherme v. borges e thales c. pahim</p></div>
           <div class="panorama-actions">
+            <a class="btn btn-ghost" href="#trabalho" data-route="trabalho">o trabalho</a>
             <button id="refresh" type="button" class="btn btn-ghost refresh-btn"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>atualizar</button>
-            <button class="btn btn-ghost" id="theme-toggle" type="button" aria-pressed="false">modo claro</button>
+            <button class="btn btn-ghost" id="theme-toggle" type="button" aria-pressed="false" aria-label="ativar modo claro" title="ativar modo claro"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg></button>
             <button class="btn present-btn" id="present" type="button"><svg class="icon" aria-hidden="true"><use href="#i-present"/></svg><span>apresentar</span><kbd>p</kbd></button>
           </div>
         </div>
 
         <div class="bento-grid">
           <article class="panel map-panel" aria-labelledby="map-title" aria-busy="true">
-            <div class="panel-heading"><h2 id="map-title">rede elétrica</h2><div class="map-actions">
-              <button class="control fullscreen-button" id="map-fullscreen" type="button" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-fullscreen"/></svg><span>tela cheia</span></button>
-            </div></div>
+            <div class="map-sidebar">
+            <h2 id="map-title">sistema interligado nacional</h2>
             <div class="map-controls">
               <label><span>subsistema</span><span class="map-select"><svg class="icon" aria-hidden="true"><use href="#i-region"/></svg><select id="map-region"><option value="brasil">brasil</option><option value="norte">norte</option><option value="nordeste">nordeste</option><option value="sudesteECentroOeste">sudeste/CO</option><option value="sul">sul</option></select></span></label>
               <label><span>infraestrutura</span><span class="map-select"><svg class="icon" aria-hidden="true"><use href="#i-grid"/></svg><select id="map-mode"><option value="existente">existente</option><option value="planejada">expansão planejada</option><option value="todas">ambas</option></select></span></label>
-              <details class="layer-menu"><summary><svg class="icon" aria-hidden="true"><use href="#i-layers"/></svg>camadas e legenda</summary><div id="map-layers"></div></details>
+              <details class="layer-menu"><summary title="camadas e legenda"><svg class="icon" aria-hidden="true"><use href="#i-layers"/></svg><span>camadas e legenda</span></summary><div id="map-layers"></div></details>
+            </div>
+            <div class="map-actions">
+              <button class="control map-flow-toggle" id="map-flow-toggle" type="button" aria-pressed="false" title="fluxo das sete usinas"><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg><span>fluxo das sete usinas</span></button>
+              <button class="control fullscreen-button" id="map-fullscreen" type="button" aria-pressed="false" title="tela cheia"><svg class="icon" aria-hidden="true"><use href="#i-fullscreen"/></svg><span>tela cheia</span></button>
+            </div>
+            <details class="experiment-ranking" id="flow-ranking" hidden>
+              <summary>maiores geradores no período</summary>
+              <p>recorte fornecido · datas do período não informadas. os pulsos ilustram linhas próximas às usinas.</p>
+              <ol id="flow-plants"></ol>
+            </details>
             </div>
             <div class="map-wrap">
               <canvas id="grid-map" tabindex="0" role="img" aria-label="mapa da infraestrutura elétrica da EPE. use as setas para deslocar e os botões para ajustar o zoom."></canvas>
+              <canvas id="flow-map" aria-hidden="true" hidden></canvas>
               <div class="map-zoom"><button class="control" id="map-add" type="button" aria-label="ampliar mapa">+</button><button class="control" id="map-sub" type="button" aria-label="reduzir mapa">−</button><button class="control" id="map-reset" type="button">recentrar</button></div>
               <div id="map-feature" class="map-feature" hidden></div>
               <p id="map-feedback" role="status" hidden></p>
@@ -47,7 +58,7 @@
           </article>
 
           <article class="panel generation-panel" aria-labelledby="generation-title">
-            <div class="panel-heading"><h3 id="generation-title">Geração por fonte</h3><svg class="icon" aria-hidden="true"><use href="#i-energy"/></svg></div>
+            <div class="panel-heading"><h3 id="generation-title">Geração por fonte</h3><svg class="icon generation-timer" id="generation-timer" viewBox="0 0 24 24" aria-hidden="true"><defs><clipPath id="energy-window"><rect id="generation-fill" x="0" y="0" width="24" height="24"/></clipPath></defs><use href="#i-energy" class="generation-charge" clip-path="url(#energy-window)"/><use href="#i-energy"/></svg></div>
             <div class="generation-total"><span id="generation-value" class="data-number loading-value">···</span><span class="unit">GW</span></div><p class="metric-description" id="generation-scope">Potência instantânea no Brasil</p>
             <div id="mix-strip" class="mix-strip" aria-hidden="true"></div>
             <div id="source-list" class="source-list"><p class="loading-copy">Buscando o balanço de energia do ONS…</p></div>
@@ -56,7 +67,7 @@
           <article class="panel metric-panel load-panel" aria-labelledby="load-title"><div class="panel-heading"><h3 id="load-title">Carga verificada</h3><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg></div><div class="metric-value"><span id="load-value" class="data-number">···</span><span class="unit">GW</span></div><p>Demanda atendida pelo sistema</p><div class="metric-bottom"><span class="mini-line" aria-hidden="true"></span><span id="load-scope">Brasil</span></div></article>
           <article class="panel metric-panel water-panel" aria-labelledby="water-title"><div class="panel-heading"><h3 id="water-title">Energia armazenada</h3><svg class="icon" aria-hidden="true"><use href="#i-water"/></svg></div><div class="metric-value"><span id="ear-value" class="data-number">···</span><span class="unit">%</span></div><p>Dos reservatórios equivalentes</p><div class="metric-bottom"><span class="water-track"><span id="ear-track"></span></span><span id="ear-date">Base diária</span></div></article>
 
-          <article class="panel reservoir-panel" aria-labelledby="reservoir-title"><div class="panel-heading"><h3 id="reservoir-title">energia armazenada por subsistema</h3><span class="subtle">EAR</span></div><div class="reservoirs" id="reservoirs"><p class="loading-copy">consultando a situação dos reservatórios…</p></div></article>
+          <article class="panel reservoir-panel" aria-labelledby="reservoir-title"><div class="panel-heading"><h3 id="reservoir-title">energia armazenada por subsistema</h3><button class="control fullscreen-button" id="reservoir-fullscreen" type="button" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-fullscreen"/></svg><span>tela cheia</span></button></div><div class="reservoirs" id="reservoirs"><p class="loading-copy">consultando a situação dos reservatórios…</p></div></article>
           <article class="panel data-panel curve-panel" aria-labelledby="curve-title">
             <div class="panel-heading"><h2 id="curve-title">curva de geração do dia</h2></div>
             <div id="curve-sources" class="curve-sources" role="group" aria-label="fonte de geração"></div>
@@ -67,6 +78,7 @@
             <div class="panel-heading"><h2 id="cut-title">curtailment</h2><label class="chart-control">período <select id="cut-period"></select></label></div>
             <div id="cut-chart"><p>carregando os cortes de geração…</p></div>
             <p id="cut-status" class="chart-source"></p>
+            <details id="live-flows" class="flow-disclosure" hidden><summary>intercâmbios entre regiões</summary><div class="flow-table"></div><p class="flow-note"></p></details>
           </article>
         </div>
         <div class="data-footnote"><button id="data-notes" class="text-button" type="button">como ler os dados</button></div>
@@ -84,7 +96,7 @@
           <article class="panel data-panel historical-panel" aria-labelledby="sankey-title">
             <div class="panel-heading"><h3 id="sankey-title">fluxo da eletricidade</h3><button class="control fullscreen-button" id="sankey-fullscreen" type="button" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-fullscreen"/></svg><span>tela cheia</span></button></div>
             <div class="sankey-control">
-              <label for="sankey-year">ano</label><output id="sankey-selection" for="sankey-year" aria-hidden="true"></output>
+              <div class="timeline-label"><button class="control" id="sankey-play" type="button" aria-label="reproduzir de 1970 a 2025" title="reproduzir de 1970 a 2025" disabled><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg></button><label for="sankey-year">ano</label></div><output id="sankey-selection" for="sankey-year" aria-hidden="true"></output>
               <input id="sankey-year" type="range" min="1970" max="2025" value="2025" step="1" disabled>
               <div class="year-limits" aria-hidden="true"><span id="sankey-first">1970</span><span id="sankey-last">2025</span></div>
             </div>
@@ -108,14 +120,14 @@
 
   <footer class="site-footer observatory-footer">
     <div class="footer-main"><a class="footer-mark" href="#panorama">elétrica.br</a>
-      <p>trabalho desenvolvido na cadeira economia industrial (ECO-02003), ministrada pela profª. drª. ana lúcia tatsch para o curso de ciências econômicas da universidade federal do rio grande do sul.</p>
-      <p class="byline">por guilherme v. borges e thales c. pahim</p>
+      <p data-preserve-case>trabalho desenvolvido na cadeira Economia Industrial (ECO-02003), ministrada pela Profª. Drª. Ana Lúcia Tatsch para o curso de Ciências Econômicas da Universidade Federal do Rio Grande do Sul.</p>
+      <p class="byline" data-preserve-case>por Guilherme V. Borges e Thales C. Pahim</p>
     </div>
-    <nav class="footer-nav" aria-label="principal"><a href="#panorama" data-route="panorama" aria-current="page">panorama</a><a href="#trabalho" data-route="trabalho">o trabalho</a></nav>
     <details id="fontes" class="footer-notes"><summary>fontes e notas</summary>
       <section class="footer-method"><h2>dados e metodologia</h2>
         <ul>
           <li>cartografia do <a href="https://www.epe.gov.br/pt/publicacoes-dados-abertos/publicacoes/webmap-epe">webmap EPE</a>. as 22 camadas incluem transmissão, subestações, usinas, sistemas isolados e limites do SIN. a rede de distribuição local não consta dos arquivos fornecidos. as geometrias foram simplificadas para visualização.</li>
+          <li>as linhas são diferenciadas pela tensão nominal do cadastro em kV. os limites operativos por linha em MW ou MVA não constam da base usada. o fluxo das sete usinas usa traçados existentes a até 35 km de cada usina e os GWh do recorte fornecido. é uma ilustração, sem medição de carga ou direção nos circuitos. <a href="https://dados.ons.org.br/dataset/linha-transmissao">cadastro de linhas do ONS</a></li>
           <li><a href="https://www.ons.org.br/paginas/energia-agora/carga-e-geracao">curva intradiária do ONS</a> em MW, com minutos em horário de Brasília. o total soma as categorias de geração disponíveis no escopo, incluindo MMGD quando publicada.</li>
           <li>curtailment com as bases abertas do ONS para <a href="https://dados.ons.org.br/dataset/restricao_coff_eolica_usi">eólica</a> e <a href="https://dados.ons.org.br/dataset/restricao_coff_fotovoltaica">solar</a> sob licença CC BY. a geração não realizada apurada (GNRa) do ONS em MW médios é convertida em MWh em intervalos de 30 minutos e somada por dia, fonte, subsistema e motivo publicado. confira a cobertura e a data no gráfico.</li>
           <li>série histórica e sankey derivados das tabelas 2.30 e 5.3 da planilha histórica fornecida. os valores do sankey usam GWh, o saldo do balanço aparece quando relevante e a oferta é agregada antes do detalhamento por consumo.</li>
@@ -125,7 +137,7 @@
         <p>o ChatGPT, família de modelos 6 sol, auxiliou no planejamento da interface, na elaboração do código, na transformação dos dados e na adaptação do material para a web. as fontes primárias estão indicadas junto aos dados. a autoria do trabalho acadêmico é de guilherme v. borges e thales c. pahim.</p>
       </section>
       <div class="sources-grid"><section class="panel"><h2>Operação em tempo real</h2><p>O balanço é consultado diretamente no serviço público do ONS a cada 60 segundos, enquanto a página está visível. Os valores em GW representam potência instantânea, convertida dos MW da fonte.</p><p>Dados operacionais são sujeitos a revisão. Uma resposta à consulta não garante que a medição seja recente: após 15 minutos, o painel sinaliza a defasagem.</p><a href="https://www.ons.org.br/paginas/energia-agora/balanco-de-energia" target="_blank" rel="noopener">Balanço de Energia do ONS</a></section>
-      <section class="panel"><h2>Reservatórios</h2><p>A energia armazenada (EAR) é a energia que pode ser obtida da água disponível nos reservatórios equivalentes. A porcentagem representa energia, não a altura da água nem o volume físico de um reservatório específico.</p><p>A referência é diária; a consulta é renovada a cada hora. O índice do SIN é informado pela fonte, sem fazer uma média simples dos subsistemas.</p><a href="https://www.ons.org.br/paginas/energia-agora/reservatorios" target="_blank" rel="noopener">Reservatórios do ONS</a></section>
+      <section class="panel"><h2>Reservatórios</h2><p>A energia armazenada (EAR) é a energia que pode ser obtida da água disponível nos reservatórios equivalentes. O nível nas silhuetas representa a porcentagem de EAR. Os contornos são os dos subsistemas elétricos da EPE.</p><p>A referência é diária; a consulta é renovada a cada hora. O índice do SIN é informado pela fonte, sem fazer uma média simples dos subsistemas.</p><a href="https://www.ons.org.br/paginas/energia-agora/reservatorios" target="_blank" rel="noopener">Reservatórios do ONS</a></section>
       <section class="panel"><h2>Capacidade de geração</h2><div id="capacity-data"></div><p>Leitura salva do SIGA/ANEEL em 25/11/2026. Abrange usinas em operação cadastradas no SIGA; a micro e minigeração distribuída tem cadastro próprio. Este indicador não tem atualização automática nesta versão.</p><a href="https://dadosabertos.aneel.gov.br/dataset/siga-sistema-de-informacoes-de-geracao-da-aneel" target="_blank" rel="noopener">SIGA da ANEEL</a></section>
       <section class="panel"><h2>O documento original</h2><p>Trabalho de Economia Industrial, Universidade Federal do Rio Grande do Sul, Porto Alegre, 2026. A síntese editorial preserva o recorte documental até 24/11/2026. As referências completas estão no PDF, páginas impressas 46–60.</p><a href="./assets/trabalho.pdf" target="_blank" rel="noopener">Abrir o trabalho original, 64 páginas</a></section></div>
       <section class="methodology"><h2>Cuidados de leitura</h2><details open><summary>Potência, energia e participação renovável</summary><p>MW e GW medem potência. MWh e GWh medem energia acumulada em um período. A categoria térmica do ONS inclui biomassa; portanto, somar hidráulica, eólica e solar não revela toda a geração renovável. O painel preserva as categorias operacionais e separa a MMGD estimada.</p><p>Pequenos valores negativos publicados pelo ONS são mantidos nos números e explicados na nota do gráfico. As barras visuais partem de zero. Itaipu é agregada à hidráulica do Sudeste/Centro-Oeste, sem duplicar o total informado.</p></details><details><summary>Dados ao vivo, diários e leituras salvas</summary><p>Quando uma consulta falha, o último dado válido ou a leitura incluída no site continua disponível, com aviso e data. Nada é preenchido com valores simulados. O balanço salvo é de 25/11/2026 e os reservatórios salvos, de 24/11/2026.</p><p>O Malha Brasil foi consultado como referência; sua operação diária informa atraso de 1–2 dias. Para este painel, foi possível usar diretamente a fonte primária do ONS.</p><a href="https://malhabrasil.com/estatisticas" target="_blank" rel="noopener">Estatísticas do Malha Brasil</a></details><details><summary>Revisões e limites do trabalho</summary><p>Adotamos os 86,6% de renováveis na oferta interna de eletricidade em 2025 do BEN final, usados no corpo e na conclusão do trabalho. A introdução registra 86,8% a partir da edição de síntese.</p><p>Os índices de concentração têm períodos e universos diferentes e alguns HHI são parciais. Pedidos de conexão de datacenters não são consumo instalado; cenários de operação não são resultados realizados. A análise do trabalho é descritiva e não identifica efeitos causais.</p><p>Normas e cronogramas são apresentados conforme o recorte do documento, sem afirmar sua vigência posterior. As pendências estão no Apêndice B do PDF.</p></details></section>
@@ -152,6 +164,12 @@
     <symbol id="i-thermal" viewBox="0 0 24 24"><path d="M12 2c1 5 6 7 6 13a6 6 0 0 1-12 0c0-3 2-6 4-8 0 3 1 4 2 4 2-2 1-6 0-9Z"/><path d="M10 18c0-2 2-3 2-5 2 2 2 3 2 5a2 2 0 0 1-4 0Z"/></symbol>
     <symbol id="i-nuclear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="1"/><ellipse cx="12" cy="12" rx="10" ry="4"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(60 12 12)"/><ellipse cx="12" cy="12" rx="10" ry="4" transform="rotate(120 12 12)"/></symbol>
     <symbol id="i-distributed" viewBox="0 0 24 24"><path d="m3 11 9-7 9 7m-3-2v11H6V9m7 2-3 4h4l-3 4"/></symbol>
+    <symbol id="i-sun" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/></symbol>
+    <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 15a8.5 8.5 0 0 1-11-11 8.5 8.5 0 1 0 11 11Z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 4 20 12 8 20Z"/></symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24"><path d="M8 5v14m8-14v14"/></symbol>
+    <symbol id="i-biomass" viewBox="0 0 24 24"><path d="M4 20c3-5 6-8 12-11m-7 7C2 8 12 3 20 4c0 8-5 14-11 12Z"/></symbol>
+    <symbol id="i-station" viewBox="0 0 24 24"><path d="M3 20h18M5 20V9l7-4 7 4v11m-6-9-3 4h4l-2 3"/></symbol>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
     <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
     <symbol id="i-document" viewBox="0 0 24 24"><path d="M14 3H5v18h14V8Zm0 0v5h5M8 12h8m-8 4h6"/></symbol>

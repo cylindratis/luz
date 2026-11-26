@@ -4,6 +4,7 @@ import { initHistorical, initPlans } from './graficos.js';
 import { initOperation } from './operacao.js';
 import { loadMadrid, renderMadrid } from './madrid.js';
 import { editorialCase, normalizeText } from './texto.js';
+import { initFullscreen } from './tela-cheia.js';
 
 const $ = selector => document.querySelector(selector);
 const $$ = selector => [...document.querySelectorAll(selector)];
@@ -12,8 +13,19 @@ const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}
 let rawBalance, reservoirs, editorial, currentRegion = 'brasil', balanceMode = 'loading', reservoirMode = 'loading', refreshing = false, lastReservoirQuery = 0;
 let currentChapter = 'introducao', slideIndex = 0, previousFocus;
 let madrid = [];
+let reservoirShapes;
+const refreshInterval = 60000;
+const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
 const map = initMap(selectRegion);
 const operation = initOperation();
+initFullscreen($('#reservoir-fullscreen'));
+getJSON('./data/mapa/medidores-ear.json').then(value => {
+  reservoirShapes = value;
+  renderReservoirs();
+}).catch(() => {
+  reservoirShapes = {};
+  renderReservoirs();
+});
 function renderBalance() {
   if (!rawBalance) return;
   const state = balanceMode === 'live' && freshness(rawBalance.Data).stale ? 'stale' : balanceMode;
@@ -49,13 +61,22 @@ function renderReservoirs() {
   $('#ear-track').style.width = percent + '%';
   $('#ear-date').textContent = civilDate(reservoirs.date);
   const meters = $('#reservoirs');
-  if (!meters.firstElementChild.matches('.ear-meter')) {
-    meters.innerHTML = REGIONS.map(region => `<div class="ear-meter" data-ear="${region.id}">
+  if (reservoirShapes && !meters.firstElementChild?.matches('.ear-meter')) {
+    meters.innerHTML = REGIONS.map(region => {
+      const shape = reservoirShapes[region.id];
+      const wave = shape ? `M-40 0${'q10 -5 20 0t20 0'.repeat(Math.ceil((shape.width + 100) / 40))}V140H-40Z` : '';
+      return `<div class="ear-meter" data-ear="${region.id}">
       <div class="ear-vessel" role="meter" aria-label="${editorialCase(region.name)}" aria-valuemin="0" aria-valuemax="100">
-        <div class="ear-water" aria-hidden="true"><svg viewBox="0 0 120 8" preserveAspectRatio="none"><path d="M0 4Q15 0 30 4T60 4T90 4T120 4V8H0Z"/></svg></div>
-      </div><div class="ear-measure"><strong></strong><span>${editorialCase(region.short)}</span></div></div>`).join('');
+        ${shape ? `<svg class="ear-map" viewBox="0 0 ${shape.width} 130" aria-hidden="true">
+          <defs><clipPath id="ear-clip-${region.id}"><path d="${shape.path}" fill-rule="evenodd" clip-rule="evenodd"/></clipPath></defs>
+          <path class="ear-land" d="${shape.path}" fill-rule="evenodd"/>
+          <g clip-path="url(#ear-clip-${region.id})"><g class="ear-level"><path class="ear-wave" d="${wave}"/></g></g>
+          <path class="ear-border" d="${shape.path}"/>
+        </svg>` : ''}
+      </div><div class="ear-measure"><strong></strong><span>${editorialCase(region.short)}</span></div></div>`;
+    }).join('');
   }
-  for (const meter of meters.children) {
+  for (const meter of meters.querySelectorAll('.ear-meter')) {
     const id = meter.dataset.ear;
     const value = reservoirs.regions[id].percent;
     const label = `${number(value)}%`;
@@ -64,7 +85,8 @@ function renderReservoirs() {
     const vessel = meter.querySelector('.ear-vessel');
     vessel.setAttribute('aria-valuenow', value);
     vessel.setAttribute('aria-valuetext', label);
-    vessel.style.setProperty('--ear', `${value}%`);
+    const level = vessel.querySelector('.ear-level');
+    if (level) level.setAttribute('transform', `translate(0 ${125 - value * 1.2})`);
   }
   const old = Date.now() - Date.parse(reservoirs.date + 'T12:00:00-03:00') > 4 * 86400000;
   $('#reading-reservoirs').textContent = `ONS · ${civilDate(reservoirs.date)} de ${reservoirs.date.slice(0, 4)} · referência diária${reservoirMode !== 'live' ? ' · leitura salva' : ''}${old ? ' · referência antiga' : ''}`;
@@ -79,20 +101,27 @@ function selectRegion(id) {
 }
 function renderFlows() {
   if (!rawBalance) return;
-  let disclosure = $('#live-flows');
-  if (!disclosure) {
-    disclosure = document.createElement('details'); disclosure.id = 'live-flows'; disclosure.className = 'flow-disclosure';
-    disclosure.innerHTML = '<summary>Intercâmbios entre regiões<span>Importação e exportação de potência</span></summary><div class="flow-table"></div><p class="flow-note"></p>';
-    $('#fetch-notice').after(disclosure);
-  }
+  $('#live-flows').hidden = false;
   $('.flow-table').innerHTML = `<div class="flow-table-head"><span>Subsistema</span><span>Importação</span><span>Exportação</span></div>` + REGIONS.map(r => `<div><span>${r.name}</span><span>${number(rawBalance[r.id].importacao / 1000, 2)} GW</span><span>${number(rawBalance[r.id].exportacao / 1000, 2)} GW</span></div>`).join('');
   $('.flow-note').textContent = `ONS · ${dateTime(rawBalance.Data)} (Brasília). Valores agregados por subsistema. O mapa mostra infraestrutura cadastrada pela EPE.`;
+}
+function resetGenerationTimer() {
+  const fill = $('#generation-fill');
+  fill.getAnimations().forEach(animation => animation.cancel());
+  if (!reducedMotion.matches) fill.animate([{ transform: 'translateY(0px)' }, { transform: 'translateY(24px)' }],
+    { duration: refreshInterval, fill: 'forwards' });
 }
 async function refreshData(force = false) {
   if (refreshing) return;
   refreshing = true; $('#refresh').disabled = true;
   const shouldQueryReservoirs = force || Date.now() - lastReservoirQuery >= 3600000;
-  const jobs = [getJSON(BALANCE_URL).then(validateBalance).then(raw => { if (!rawBalance || Date.parse(raw.Data) >= Date.parse(rawBalance.Data)) rawBalance = raw; balanceMode = freshness(rawBalance.Data).stale ? 'stale' : 'live'; }).catch(() => { balanceMode = rawBalance ? 'saved' : 'error'; })];
+  const jobs = [getJSON(BALANCE_URL).then(validateBalance).then(raw => {
+    if (!rawBalance || Date.parse(raw.Data) >= Date.parse(rawBalance.Data)) {
+      rawBalance = raw;
+      resetGenerationTimer();
+    }
+    balanceMode = freshness(rawBalance.Data).stale ? 'stale' : 'live';
+  }).catch(() => { balanceMode = rawBalance ? 'saved' : 'error'; })];
   if (shouldQueryReservoirs) jobs.push(getJSON(RESERVOIR_URL).then(normalizeReservoirs).then(data => { if (!reservoirs || data.date >= reservoirs.date) reservoirs = data; reservoirMode = 'live'; lastReservoirQuery = Date.now(); }).catch(() => { reservoirMode = reservoirs ? 'saved' : 'error'; }));
   await Promise.allSettled(jobs);
   refreshing = false; $('#refresh').disabled = false;
@@ -194,7 +223,8 @@ $('#previous-slide').addEventListener('click',()=>changeSlide(-1));$('#next-slid
 window.addEventListener('hashchange',()=>route({focus:true}));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshData();});
 window.addEventListener('online',()=>refreshData(true));
-setInterval(()=>{if(!document.hidden)refreshData();},60000);
+setInterval(()=>{if(!document.hidden)refreshData();},refreshInterval);
+reducedMotion.addEventListener('change', () => { if (rawBalance) resetGenerationTimer(); });
 setInterval(()=>{if(!document.hidden)renderBalance();},30000);
 
 async function init() {
@@ -218,7 +248,10 @@ async function init() {
 function setTheme(theme) {
   const light = theme === 'claro';
   document.documentElement.dataset.theme = light ? 'claro' : 'eletrica';
-  $('#theme-toggle').textContent = light ? 'modo escuro' : 'modo claro';
+  const action = light ? 'ativar modo escuro' : 'ativar modo claro';
+  $('#theme-toggle').setAttribute('aria-label', action);
+  $('#theme-toggle').title = action;
+  $('#theme-toggle use').setAttribute('href', light ? '#i-moon' : '#i-sun');
   $('#theme-toggle').setAttribute('aria-pressed', String(light));
   $('meta[name="theme-color"]').content = light ? '#edf3f7' : '#080b10';
   try { localStorage.setItem('luz-tema', theme); } catch {}

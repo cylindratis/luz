@@ -91,30 +91,38 @@ export function lineChart(container, series, options) {
 }
 
 function sankey(container, year) {
-  const input = [['centrais de serviço público', year.publica], ['autoprodução', year.autoproducao], ['importação', year.importacao]];
+  const sourceGroups = [
+    ['hidrelétrica', 'var(--plot-blue)', ['hidráulica']],
+    ['carvão', 'var(--plot-ink)', ['carvão vapor']],
+    ['gás natural', 'var(--plot-red)', ['gás natural']],
+    ['óleo e derivados', 'var(--plot-orange)', ['óleo diesel', 'óleo combustível']],
+    ['nuclear', 'var(--plot-purple)', ['urânio contido no uo2']],
+    ['biomassa', 'var(--plot-green)', ['lenha', 'bagaço de cana', 'lixívia', 'biodiesel']],
+    ['eólica', 'var(--wind)', ['eólica']],
+    ['solar', 'var(--solar)', ['solar']]
+  ];
+  const listed = new Set(sourceGroups.flatMap(group => group[2]));
+  const others = Object.entries(year.fontes).filter(([name]) => !listed.has(name)).reduce((sum, [,value]) => sum + value, 0);
+  const input = sourceGroups.map(([name, color, columns]) => [name, columns.reduce((sum, key) => sum + (year.fontes[key] || 0), 0), color]);
+  input.push(['outras fontes', others, 'var(--faint)'], ['importação', year.importacao, 'var(--plot-blue)']);
   const output = [...Object.entries(year.consumo), ['perdas', year.perdas], ['exportação', year.exportacao]];
   if (year.diferenca > .5) output.push(['saldo do balanço', year.diferenca]);
   if (year.diferenca < -.5) input.push(['saldo do balanço', -year.diferenca]);
   const total = input.reduce((sum, [, value]) => sum + value, 0);
-  const unit = 183 / total;
+  const height = 185, unit = height / total;
   const incoming = input.filter(([, value]) => value > 0);
   const outgoing = output.filter(([, value]) => value > 0);
-  const gap = 16, mid = 62;
-  const nodeLabel = (text, x, y, anchor = 'start') => {
-    const lines = text === 'centrais de serviço público' ? ['centrais de', 'serviço público'] : [
-      { 'setor energético': 'setor energia', 'saldo do balanço': 'saldo' }[text] || text
-    ];
-    return `<text x="${x}" y="${y - (lines.length - 1) * 9}" text-anchor="${anchor}">${lines.map((line, i) =>
-      `<tspan x="${x}" dy="${i ? 18 : 0}">${names(line)}</tspan>`).join('')}</text>`;
-  };
+  const gap = 20, mid = 113;
+  const nodeLabel = (text, x, y, anchor = 'start') =>
+    `<text x="${x}" y="${y}" text-anchor="${anchor}">${names(({ 'setor energético': 'setor energia', 'saldo do balanço': 'saldo' })[text] || text)}</text>`;
   const ribbon = (x1, y1, x2, y2, h, color) => {
     const c = (x1 + x2) / 2;
     return `<path d="M${x1},${y1} C${c},${y1} ${c},${y2} ${x2},${y2} V${y2 + h} C${c},${y2 + h} ${c},${y1 + h} ${x1},${y1 + h} Z" style="fill:${color}" />`;
   };
   let cy = mid, iy = mid - ((incoming.length - 1) * gap) / 2;
-  let svg = '<svg class="sankey" viewBox="0 0 680 308" role="img" aria-label="fluxo da eletricidade em GWh">';
-  for (const [i, [label, value]] of incoming.entries()) {
-    const h = value * unit, color = colors[i % colors.length];
+  let svg = `<svg class="sankey" viewBox="0 0 680 419" role="img" aria-label="fluxo da eletricidade em GWh em ${year.ano}">`;
+  for (const [label, value, color = 'var(--faint)'] of incoming) {
+    const h = value * unit;
     svg += ribbon(192, iy, 328, cy, h, color);
     svg += `<rect x="184" y="${iy}" width="8" height="${h}" style="fill:${color}"/>${nodeLabel(label, 177, iy + h / 2 + 4, 'end')}`;
     cy += h;
@@ -129,7 +137,7 @@ function sankey(container, year) {
     cy += h;
     oy += h + gap;
   }
-  svg += `<rect x="328" y="${mid}" width="12" height="183" class="sankey-center"/><text x="334" y="${mid - 18}" text-anchor="middle">oferta elétrica</text></svg>`;
+  svg += `<rect x="328" y="${mid}" width="12" height="${height}" class="sankey-center"/><text x="334" y="${mid - 18}" text-anchor="middle">oferta elétrica</text></svg>`;
   container.innerHTML = svg;
   attachTable(container, ['origem ou destino', 'energia (GWh)'], [...input, ...output].map(([k,v]) => [k, number(v, 2)]));
 }
@@ -143,6 +151,16 @@ export async function initHistorical() {
   year.max = $('#sankey-last').textContent = history.at(-1).ano;
   year.value = year.max;
   year.disabled = false;
+  const play = $('#sankey-play');
+  play.disabled = false;
+  let timer;
+  const stop = () => {
+    clearInterval(timer);
+    timer = undefined;
+    play.setAttribute('aria-label', 'reproduzir de 1970 a 2025');
+    play.title = 'reproduzir de 1970 a 2025';
+    play.querySelector('use').setAttribute('href', '#i-play');
+  };
   const pick = (name, value) => ({ name, points: history.map(row => [row.ano, value(row) ?? null]) });
   const draw = () => {
     const lines = {
@@ -161,7 +179,21 @@ export async function initHistorical() {
     sankey($('#sankey-chart'), byYear.get(year.valueAsNumber));
   };
   metric.addEventListener('change', draw);
-  year.addEventListener('input', drawFlow);
+  year.addEventListener('input', () => { stop(); drawFlow(); });
+  play.addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (year.value === year.max) { year.value = year.min; drawFlow(); }
+    play.setAttribute('aria-label', 'pausar reprodução');
+    play.title = 'pausar reprodução';
+    play.querySelector('use').setAttribute('href', '#i-pause');
+    timer = setInterval(() => {
+      year.stepUp();
+      drawFlow();
+      if (year.value === year.max) stop();
+    }, 280);
+  });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) stop(); });
+  window.addEventListener('hashchange', () => { if ($('#view-panorama').hidden) stop(); });
   initFullscreen($('#history-fullscreen'));
   initFullscreen($('#sankey-fullscreen'));
   draw();
