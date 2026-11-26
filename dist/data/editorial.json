@@ -1,0 +1,200 @@
+{
+  "metadata": {
+    "title": "Setor elétrico brasileiro",
+    "subtitle": "Regulação, desenho de mercado e coordenação do suprimento",
+    "institution": "Universidade Federal do Rio Grande do Sul",
+    "course": "Economia Industrial",
+    "place": "Porto Alegre",
+    "year": 2026,
+    "sourceFile": "Setor_eletrico_brasileiro.pdf",
+    "pages": 64,
+    "researchCutoff": "2026-11-24",
+    "paginationNote": "As páginas citadas em page são as páginas impressas. A página física no PDF é page + 1, exceto capa, folha de rosto e sumário.",
+    "verificationScope": "Síntese fiel ao material fornecido. Leis, referências e números foram extraídos do PDF; não houve atualização ou confirmação independente das fontes externas nesta pesquisa editorial. Apresentar como recorte do trabalho."
+  },
+  "research": {
+    "question": "Em que condições tratados, leilões, operação centralizada e regulação tarifária favorecem tarifas acessíveis, segurança de suprimento e as metas de desenvolvimento sustentável?",
+    "hypothesis": "O desenho institucional favorece o abastecimento seguro e a incorporação de renováveis quando contratação, expansão da rede e evolução da demanda são compatíveis.",
+    "mechanism": "O planejamento organiza a expansão, os contratos distribuem receitas e riscos, e a operação mantém o equilíbrio físico do sistema.",
+    "failure": "Quando essa coordenação falha, podem coexistir geração disponível sujeita a cortes, necessidade de reforços de rede e pressão sobre as tarifas.",
+    "method": "Pesquisa bibliográfica e documental com estatística descritiva.",
+    "scope": "SIN, sistemas isolados quando relevantes ao acesso e vínculos internacionais que afetam o suprimento brasileiro.",
+    "pages": [3, 4, 5]
+  },
+  "chapters": [
+    {
+      "number": 2,
+      "id": "fundamentos",
+      "title": "Por que regular?",
+      "originalTitle": "Referencial teórico",
+      "claim": "Redes, contratos e operação exigem mecanismos de coordenação distintos.",
+      "summary": "Transmissão e distribuição apresentam economias de rede e características de monopólio natural. Geração e comercialização admitem competição, condicionada ao acesso à rede e à disponibilidade na hora e no local necessários. A regulação enfrenta informação assimétrica sobre custos e esforço; metas de qualidade ajudam a impedir que economia de custos deteriore o serviço.",
+      "points": [
+        "Monopólio natural: atender a demanda com uma rede pode custar menos que duplicar a infraestrutura.",
+        "Informação assimétrica: regulador e empresas não observam as mesmas informações sobre custos e desempenho.",
+        "Incentivos: Fator X, revisões tarifárias, DEC e FEC vinculam remuneração, produtividade e qualidade.",
+        "Leilões: preço ofertado depende de habilitação, concorrência, obrigações de entrega e alocação de riscos.",
+        "Água armazenada tem custo de oportunidade: gerar hoje pode reduzir a oferta futura."
+      ],
+      "pages": [6, 7, 8, 9, 10],
+      "sources": ["Baumol (1977)", "Laffont e Tirole (1993)", "Stigler (1971)", "Joskow (2007; 2022)", "Klemperer (2002)", "Milgrom (2004)", "Stoft (2002)"]
+    },
+    {
+      "number": 3,
+      "id": "historia",
+      "title": "Como o setor se formou",
+      "originalTitle": "História do setor elétrico brasileiro",
+      "claim": "A história do setor redistribui responsabilidades pelo investimento e pelos riscos do atendimento.",
+      "summary": "O setor passou de concessões locais privadas à expansão estatal de grandes usinas e redes; depois, reformas separaram regulação, operação e comercialização. O racionamento de 2001 evidenciou insuficiências na expansão e na coordenação, e o modelo de 2004 fortaleceu planejamento e contratação antecipada.",
+      "points": ["Light e AMFORP consolidaram concessões urbanas.", "O Código de Águas ampliou a regulação federal.", "Plano de Metas e Eletrobras coordenaram a expansão além da escala local.", "As reformas dos anos 1990 abriram atividades à competição e criaram ANEEL e ONS.", "O modelo de 2004 consolidou ACR e ACL, além de EPE e CCEE.", "No recorte do trabalho, a abertura da baixa tensão ainda tinha implementação futura."],
+      "pages": [11, 12, 13, 14, 15]
+    },
+    {
+      "number": 4,
+      "id": "estrutura",
+      "title": "Quatro elos, regras distintas",
+      "originalTitle": "Estrutura atual do setor e análise por segmento",
+      "claim": "Geração e comercialização competem; transmissão e distribuição remuneram serviços de rede regulados.",
+      "summary": "Uma mesma energia envolve produção, transporte, rede local e contratos. Cada elo tem produto, barreiras à entrada, riscos e medidas de concentração próprios. Os índices nacionais de porte não substituem a análise da concorrência local nem autorizam comparação direta entre bases diferentes.",
+      "points": ["Geração: capacidade disponível só se torna oferta útil quando a rede permite entregá-la.", "Transmissão: a competição ocorre pela concessão; disponibilidade e prazo são obrigações posteriores.", "Distribuição: escolher fornecedor no ACL não muda a rede local utilizada.", "Comercialização: contratos diferenciam prazo, preço, garantias, flexibilidade e serviços de gestão.", "CR4 e HHI devem declarar unidade, período, universo e consolidação societária."],
+      "pages": [16, 17, 18, 19, 20, 21]
+    },
+    {
+      "number": 5,
+      "id": "operacao",
+      "title": "Uma rede, quatro subsistemas",
+      "originalTitle": "O SIN e a operação integrada",
+      "claim": "A interligação compartilha recursos; seus ganhos dependem dos limites de transmissão e da segurança da operação.",
+      "summary": "O ONS coordena geração, estoques de água, previsões de carga e intercâmbios. NEWAVE, DECOMP e DESSEM conectam decisões de diferentes horizontes. A CCEE registra contratos e liquida diferenças; o contrato comercial não determina um trajeto físico exclusivo para a eletricidade.",
+      "points": ["Norte, Nordeste, Sudeste/Centro-Oeste e Sul formam os quatro subsistemas.", "Usar água hoje tem consequências para o atendimento futuro.", "O CMO estima custo incremental de operação; o PLD aplica regras e limites para a liquidação comercial.", "Racionamento de 2001: adequação da oferta ao longo do tempo.", "Blecautes de 2009 e 2023: segurança, controles, proteção e recomposição.", "Potência interrompida em MW e energia não suprida em MWh são medidas diferentes."],
+      "pages": [22, 23, 24, 25, 26]
+    },
+    {
+      "number": 6,
+      "id": "regulacao",
+      "title": "Quem contrata, quem paga",
+      "originalTitle": "Regulação e desenho de mercado",
+      "claim": "Tarifas acessíveis dependem do custo total e de como contratos, redes e encargos repartem os riscos.",
+      "summary": "No ACR, distribuidoras contratam para o mercado cativo por mecanismos regulados. No ACL, agentes elegíveis negociam o fornecimento, continuando a pagar rede e encargos. Leilões de energia e de capacidade remuneram produtos diferentes. Regulação tarifária, RAP e CDE conectam remuneração das empresas e custos dos consumidores.",
+      "points": ["ACR: contratação regulada para consumidores cativos.", "ACL: negociação de condições e gestão da exposição contratual.", "Energia contratada e potência disponível atendem necessidades distintas.", "Parcela A reconhece compra de energia, transmissão e encargos; Parcela B remunera distribuição.", "A CDE financia políticas de acesso e outras finalidades; a incidência distributiva precisa ser medida.", "Desconto de 100% em faixa tarifária não significa necessariamente fatura integralmente zerada."],
+      "pages": [27, 28, 29, 30, 31]
+    },
+    {
+      "number": 7,
+      "id": "itaipu",
+      "title": "Itaipu: energia e tratado",
+      "originalTitle": "Itaipu",
+      "claim": "Direitos de contratação binacionais tornam-se energia entregue por meio da hidrologia e da transmissão.",
+      "summary": "O Tratado de 1973 estabelece igualdade de direitos e obrigações e divisão paritária da energia entre Brasil e Paraguai. Cada país pode adquirir a parcela que o outro não utilizar. O Anexo C organiza custos e serviços. ENBPar e ANDE são as compradoras nos respectivos países, e a entrega efetiva pode diferir da divisão paritária dos direitos.",
+      "points": ["Anexo A: governança; Anexo B: instalações; Anexo C: bases financeiras e de serviço.", "A ENBPar sucedeu a Eletrobras nas obrigações relativas a Itaipu em 2022.", "O CUSE binacional e a tarifa brasileira de repasse são valores com composições distintas.", "A entrega em 60 Hz usa transmissão em 765 kV; a parcela de 50 Hz para o Brasil passa por elo de corrente contínua.", "No corte de 24/11/2026, a revisão final do Anexo C e o valor binacional para 2027 permaneciam pendentes."],
+      "pages": [32, 33, 34, 35]
+    },
+    {
+      "number": 8,
+      "id": "integracao",
+      "title": "Além da fronteira",
+      "originalTitle": "Integração elétrica com a América Latina",
+      "claim": "Interconexão física, autorização comercial e operação coordenada precisam coincidir para haver entrega.",
+      "summary": "Intercâmbios ampliam opções de atendimento e aproveitamento de excedentes, mas dependem das redes dos dois países e da prioridade ao consumo doméstico. Argentina e Uruguai operam em frequência diferente da brasileira e utilizam conversoras. Itaipu tem regime próprio; a conexão venezuelana tem condições técnicas específicas no recorte documentado.",
+      "points": ["Argentina: Garabi I e II, com potência nominal de 1.100 MW cada.", "Uruguai: Rivera, 70 MW, e Melo, 500 MW.", "Paraguai: Itaipu tem tratado próprio; a Portaria nº 87/2024 examinada no trabalho exclui a energia da usina.", "Venezuela: a linha internacional não equivale a um recurso regular irrestrito do SIN.", "Médias comerciais do MME e fluxos físicos horários do ONS têm escopos diferentes.", "No arquivo histórico do ONS descrito no trabalho, positivo é saída do Brasil e negativo é entrada; não assumir que outra API use o mesmo sinal."],
+      "pages": [36, 37, 38, 39]
+    },
+    {
+      "number": 9,
+      "id": "transicao",
+      "title": "A transição exige flexibilidade",
+      "originalTitle": "Temas contemporâneos",
+      "claim": "Expandir renováveis só melhora o atendimento quando o sistema consegue aproveitar sua produção.",
+      "summary": "Cortes de geração, novas cargas concentradas, baterias, geração distribuída e abertura do mercado mudam a coordenação. É preciso distinguir capacidade de energia entregue, pedidos de conexão de consumo efetivo e simulações de resultados observados. Perfil horário, localização e flexibilidade determinam o valor da expansão.",
+      "points": ["Curtailment: corte pode decorrer de indisponibilidade externa, confiabilidade elétrica ou impossibilidade de absorção pela carga.", "Datacenters: contratos renováveis não garantem atendimento renovável em todas as horas.", "Baterias: armazenam energia e prestam disponibilidade de potência, com limites de duração e perdas.", "MMGD: pode aliviar carga local ou exigir reforços conforme a coincidência entre produção e demanda.", "Abertura do mercado: avaliar fatura total, compreensão do contrato, continuidade e custos de sobrecontratação."],
+      "pages": [40, 41, 42, 43]
+    },
+    {
+      "number": 10,
+      "id": "conclusao",
+      "title": "Coordenar para entregar",
+      "originalTitle": "Considerações finais",
+      "claim": "Rede, contratos e flexibilidade precisam avançar juntos para transformar expansão renovável em serviço confiável.",
+      "summary": "A evidência documental sustenta descritivamente a hipótese de coordenação. Contratação antecipada dá previsibilidade, a operação integrada aproveita complementaridades e a regulação sustenta a entrega. Os benefícios devem ser julgados pelo custo total, acesso, continuidade, energia renovável aproveitada e resiliência.",
+      "points": ["ODS 7: acesso, preços acessíveis, renováveis e eficiência.", "ODS 9: entrega e resiliência da infraestrutura, inovação e capacidade tecnológica.", "ODS 13: riscos climáticos e emissões das decisões de expansão e operação.", "O trabalho identifica mecanismos e riscos; não demonstra efeitos causais sobre tarifas, emissões ou confiabilidade."],
+      "pages": [44, 45]
+    }
+  ],
+  "timeline": [
+    {"year": "Concessões urbanas", "title": "Redes locais e capital privado", "text": "Light e AMFORP expandem sistemas locais vinculados à urbanização e à indústria.", "page": 11},
+    {"year": "1934", "title": "Código de Águas", "text": "A exploração hidráulica e a fiscalização passam a ter disciplina federal ampliada.", "page": 11},
+    {"year": "1956–1962", "title": "Plano de Metas e Eletrobras", "text": "A expansão coordena usinas, linhas e financiamento em escala nacional. Eletrobras instalada em 1962.", "page": 12},
+    {"year": "1973", "title": "Tratado de Itaipu", "text": "Brasil e Paraguai definem o aproveitamento compartilhado e suas obrigações binacionais.", "page": 12},
+    {"year": "1995–1998", "title": "Separação de funções", "text": "Reformas ampliam a competição; ANEEL é instituída em 1996 e ONS em 1998.", "page": 13},
+    {"year": "2001–2004", "title": "Crise e novo modelo", "text": "O racionamento é seguido pela consolidação de ACR e ACL, planejamento e contratação antecipada.", "page": 14},
+    {"year": "2022", "title": "Capitalização da Eletrobras", "text": "A União perde o controle acionário; Itaipu e Eletronuclear são separadas sob a ENBPar.", "page": 15},
+    {"year": "2024 em diante", "title": "Ampliação da escolha", "text": "Consumidores do Grupo A tornam-se elegíveis ao mercado livre. No recorte do trabalho, baixa tensão tem abertura futura prevista.", "page": 15}
+  ],
+  "segments": [
+    {"id": "geracao", "name": "Geração", "job": "Produzir eletricidade", "market": "Competição entre projetos e contratos", "constraint": "Recurso primário, conexão, financiamento e escoamento", "measure": "Potência instalada ou energia produzida, com período e universo declarados", "quality": "Disponibilidade e capacidade de entregar na hora necessária", "page": 16},
+    {"id": "transmissao", "name": "Transmissão", "job": "Transportar potência entre regiões", "market": "Concessões e remuneração regulada; competição pelo direito de implantar e operar", "constraint": "Corredores, licenciamento, construção e segurança sistêmica", "measure": "Receita Anual Permitida (RAP) ou capacidade, conforme a pergunta", "quality": "Prazo de entrada, disponibilidade e capacidade de transferência", "page": 17},
+    {"id": "distribuicao", "name": "Distribuição", "job": "Levar eletricidade ao usuário pela rede local", "market": "Monopólio natural na área de concessão", "constraint": "Densidade, extensão territorial, conexão e manutenção", "measure": "Unidades consumidoras ou energia, sem confundir operador com controlador final", "quality": "DEC, FEC, atendimento, perdas e continuidade", "page": 18},
+    {"id": "comercializacao", "name": "Comercialização", "job": "Organizar contratos e administrar riscos", "market": "Negociação e representação varejista no ACL", "constraint": "Crédito, garantias, informação, medição e habilitação", "measure": "Volume comercializado por ambiente e grupo, depurando revendas", "quality": "Clareza das ofertas, solvência, gestão de consumo e exposição", "page": 19}
+  ],
+  "institutions": [
+    {"name": "MME", "role": "Formula políticas e autoriza modalidades de intercâmbio internacional examinadas no trabalho.", "pages": [15, 37]},
+    {"name": "EPE", "role": "Produz estudos de planejamento da expansão e bases de informação energética.", "pages": [14, 28]},
+    {"name": "ANEEL", "role": "Regula e fiscaliza os serviços; disciplina tarifas, qualidade e remuneração das redes.", "pages": [13, 29]},
+    {"name": "ONS", "role": "Coordena e controla a operação da geração e da transmissão no SIN.", "pages": [22, 23]},
+    {"name": "CCEE", "role": "Registra contratos, contabiliza posições, calcula e divulga o PLD e operacionaliza a liquidação do mercado de curto prazo.", "pages": [22, 23, 24]},
+    {"name": "CMSE", "role": "Integra o arranjo de monitoramento da segurança de suprimento.", "pages": [14, 38]},
+    {"name": "ENBPar / ANDE", "role": "Compradoras da energia de Itaipu no Brasil e no Paraguai, respectivamente.", "pages": [32, 34]}
+  ],
+  "facts": [
+    {"id": "renewable-electricity", "value": 86.6, "unit": "%", "label": "Renováveis na oferta interna de eletricidade", "period": "2025", "nature": "Resultado observado citado no PDF", "source": "EPE, BEN 2026, edição final (2026e)", "pages": [42, 45, 61], "note": "Usar 86,6%. A introdução registra 86,8% a partir da edição de síntese; a conclusão explica que adota a edição final. Não corresponde ao indicador ODS 7.2.1 nem ao dado em tempo real do ONS."},
+    {"id": "renewable-total-energy", "value": 50.2, "unit": "%", "label": "Renováveis no consumo final total de energia", "period": "2023", "nature": "Indicador ODS 7.2.1 citado no PDF", "source": "ONU, perfil brasileiro dos ODS", "pages": [4, 41, 61], "note": "Inclui usos energéticos além da eletricidade; não comparar diretamente com a matriz elétrica."},
+    {"id": "electricity-access-population", "value": 99.8, "unit": "%", "label": "População com acesso à eletricidade", "period": "2024", "nature": "Indicador ODS 7.1.1 citado no PDF", "source": "ONU, perfil brasileiro dos ODS", "pages": [4], "note": "Acesso não mede duração das interrupções, qualidade ou capacidade de pagar."},
+    {"id": "energy-intensity", "value": 3.2, "unit": "MJ por dólar de PIB em PPC de 2021", "label": "Intensidade energética primária", "period": "2023", "nature": "Indicador ODS 7.3.1 citado no PDF", "source": "ONU, perfil brasileiro dos ODS", "pages": [4, 42, 61]},
+    {"id": "generation-cr4", "value": 34.0, "unit": "%", "label": "CR4 da capacidade instalada do SIN no recorte publicado", "period": "setembro de 2026", "nature": "Cálculo do trabalho sobre apresentação corporativa", "source": "ENGIE Brasil Energia (2026), p. 10, com referência ao PMO", "pages": [16, 21], "note": "Considera somente parcela nacional de Itaipu. HHI de 528,14 pontos é parcial; integral pendente."},
+    {"id": "transmission-cr4", "value": 64.7, "unit": "%", "label": "CR4 da RAP no recorte publicado", "period": "ciclo 2024/2025", "nature": "Cálculo do trabalho sobre formulário corporativo", "source": "ISA Energia Brasil (2026), seção 1.4", "pages": [18, 21], "note": "HHI de 1.534,35 pontos é parcial; HHI integral e atualização para 2026/2027 pendentes."},
+    {"id": "distribution-cr4", "value": 31.27, "unit": "%", "label": "CR4 das unidades consumidoras por operador", "period": "dezembro de 2025", "nature": "Cálculo do trabalho sobre tabela oficial", "source": "MME (2026), tabela 12", "pages": [19, 21], "note": "Universo de 103 operadoras e 93.589.448 unidades consumidoras; HHI de 455,37 integral apenas nesse universo. Não mede concorrência na área de concessão."},
+    {"id": "retail-cr4", "value": 31, "unit": "% aproximadamente", "label": "CR4 varejista no recorte nacional por grupo", "period": "junho de 2026", "nature": "Participações arredondadas publicadas", "source": "Neoenergia (2026), p. 6, baseada em painel CCEE", "pages": [20, 21], "note": "HHI parcial reconstituído de 360; HHI integral de 414 reportado pela fonte. Não representa toda comercialização no ACL."},
+    {"id": "free-market-epe", "value": 44.8, "unit": "%", "label": "Consumo livre no recorte do Anuário EPE", "period": "2025", "nature": "Estatística publicada citada no PDF", "source": "Anuário Estatístico de Energia Elétrica 2026", "pages": [20], "note": "253,7 TWh. Não misturar com participação de 42% da CCEE: os universos diferem."},
+    {"id": "free-market-ccee", "value": 42, "unit": "%", "label": "ACL no consumo apurado pela CCEE", "period": "2025", "nature": "Balanço publicado citado no PDF", "source": "CCEE (2026d)", "pages": [27], "note": "ACR representa 58% do mesmo recorte. Não equivale aos 44,8% do Anuário EPE."},
+    {"id": "cde-budget", "value": 52.660, "unit": "R$ bilhões", "label": "Orçamento aprovado da CDE", "period": "2026", "nature": "Orçamento aprovado, não execução", "source": "ANEEL (2026c)", "pages": [30], "note": "R$ 47,793 bilhões em cotas CDE-Uso, cerca de 90,8%. Impacto distributivo líquido por renda e execução financeira por finalidade estão pendentes."},
+    {"id": "itaipu-capacity", "value": 14000, "unit": "MW", "label": "Potência instalada de Itaipu", "period": "Característica técnica documentada no trabalho", "nature": "Capacidade nominal", "source": "Itaipu Binacional", "pages": [34]},
+    {"id": "itaipu-delivered", "value": 72446704, "unit": "MWh", "label": "Energia suprida por Itaipu às duas compradoras", "period": "2025", "nature": "Energia suprida contabilizada", "source": "Itaipu Binacional (2026a; 2026b)", "pages": [34], "parts": [{"name": "ENBPar (Brasil)", "value": 46678528, "unit": "MWh"}, {"name": "ANDE (Paraguai)", "value": 25768176, "unit": "MWh"}], "note": "64,43% do suprimento foi entregue à ENBPar. Não chamar esse total de geração bruta nem interpretar como direito de propriedade, que é paritário."},
+    {"id": "itaipu-cuse", "value": 19.28, "unit": "US$/kW-mês", "label": "CUSE nominal binacional", "period": "2024–2026", "nature": "Custo unitário do serviço de potência contratada", "source": "Itaipu Binacional, demonstrações contábeis (2026a)", "pages": [33], "note": "Tarifa brasileira de repasse de 2026: US$17,66/kW-mês, composição distinta. Não converter para preço final de energia em R$/MWh sem hipóteses adicionais."},
+    {"id": "exports-argentina", "value": 342, "unit": "MW médios", "label": "Exportação comercial média para a Argentina", "period": "2025", "nature": "Média comercial publicada", "source": "MME, boletim de dezembro de 2025", "pages": [38], "note": "Não representa todos os fluxos físicos brutos anuais da fronteira."},
+    {"id": "exports-uruguay", "value": 25, "unit": "MW médios", "label": "Exportação comercial média para o Uruguai", "period": "2025", "nature": "Média comercial publicada", "source": "MME, boletim de dezembro de 2025", "pages": [38]},
+    {"id": "net-imports", "value": 7.4, "unit": "TWh", "label": "Importação líquida nacional de eletricidade", "period": "2025", "nature": "Saldo anual no BEN final", "source": "EPE, BEN 2026 final (2026e)", "pages": [38], "note": "Predomina a contribuição de Itaipu. Não é soma do intercâmbio bruto por país."},
+    {"id": "datacenters-requests", "value": 26.3, "unit": "GW", "label": "Projetos de datacenters com processos de conexão à Rede Básica", "period": "Horizonte até 2038", "nature": "Pedidos protocolados, não capacidade conectada nem consumo observado", "source": "EPE, PDE 2035 (2026c), capítulo 4", "pages": [41, 61]},
+    {"id": "ons-flexibility-scenario", "value": 4, "unit": "GW", "label": "Novas cargas de perfil constante em simulação do ONS", "period": "Cenário 2026–2029", "nature": "Premissa de cenário", "source": "ONS, PAR/PEL 2025, seção 6.2", "pages": [41, 61], "result": {"value": 693, "unit": "MW médios", "label": "Redução simulada dos cortes"}, "note": "Abrange grandes consumidores, sem isolar datacenters. Não é resultado realizado nem previsão incondicional."},
+    {"id": "mmgd-capacity", "value": 45040, "unit": "MW", "label": "Potência instalada de micro e minigeração distribuída", "period": "2025", "nature": "Resultado observado citado no PDF", "source": "EPE, BEN 2026 final (2026e)", "pages": [42, 61]},
+    {"id": "mmgd-generation", "value": 54483, "unit": "GWh", "label": "Geração elétrica de micro e minigeração distribuída", "period": "2025", "nature": "Resultado observado citado no PDF", "source": "EPE, BEN 2026 final (2026e)", "pages": [42, 61]}
+  ],
+  "pending": [
+    "Conciliação do blecaute de 2023: RAP informa cerca de 23.368 MW; Relatório Anual registra 22.547 MW. O trabalho adota o RAP na síntese técnica e não considera as medidas uma série homogênea.",
+    "Execução financeira da CDE 2026 por finalidade e incidência distributiva líquida por faixa de renda.",
+    "CR4 e HHI integrais por CNPJ e controlador na geração; HHI integral de transmissão e atualização do CR4; índices por energia e grupo na distribuição; volume nacional vendido no ACL e depuração de revendas.",
+    "Mapa societário completo com período comum entre as bases.",
+    "Séries históricas e desagregações de acesso, continuidade, renováveis no consumo final e intensidade energética.",
+    "Texto final revisado do Anexo C e CUSE binacional aplicável a 2027, ainda pendentes na data de corte de 24/11/2026.",
+    "Intercâmbio físico bruto anual de 2025 por país e conciliação com modalidades comerciais, emergenciais, testes e oportunidade.",
+    "Total anual dos cortes de geração em 2025 por fonte e causa; íntegra da Nota Técnica nº 183/2026-STD/ANEEL.",
+    "Consumo observado exclusivamente de datacenters, potência flexível contratada e execução do Redata e das Temporadas de Acesso.",
+    "Potência adjudicada nos leilões de baterias e efeitos da abertura da baixa tensão sobre faturas por classe. Os certames de baterias eram futuros no recorte do PDF."
+  ],
+  "editorialCautions": [
+    "Identificar todos os números do trabalho como históricos ou como recorte documental; o painel ONS ao vivo é outra camada de informação.",
+    "Priorizar o BEN final: 86,6%, mantendo uma nota sobre os 86,8% da introdução.",
+    "Matriz elétrica não equivale à matriz energética; ODS 7.2.1 usa consumo final total de energia.",
+    "Capacidade em MW não é geração em MWh; MW médios é potência média, não capacidade nominal.",
+    "A carteira contratada não determina a rota física da eletricidade.",
+    "Não apresentar os índices de concentração como comparáveis diretamente: unidades, períodos e agregação diferem.",
+    "A análise é descritiva. Não afirmar que o trabalho provou causalmente redução de tarifa ou emissões.",
+    "Uma margem de transmissão ou geração excedente não substitui critérios de segurança e confiabilidade.",
+    "O fato de o trabalho citar legislação de 2026 não a torna automaticamente confirmada fora do documento; antes de apresentar como regra vigente hoje, verificar a fonte primária."
+  ],
+  "presentationClosing": {
+    "headline": "Expandir é preciso. Coordenar também.",
+    "statement": "Usinas, redes, contratos e flexibilidade precisam evoluir juntos para entregar energia confiável a um custo que os consumidores possam pagar.",
+    "discussion": "Quem deve assumir o custo quando a energia existe, mas a rede ou a demanda não permitem aproveitá-la?",
+    "source": "Síntese editorial das considerações finais, pp. 44–45."
+  }
+}

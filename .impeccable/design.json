@@ -1,0 +1,427 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-26T00:00:55.504Z",
+  "title": "Design System: Elétrica.br",
+  "extensions": {
+    "colorMeta": {
+      "ground": {
+        "role": "neutral",
+        "displayName": "Carvão",
+        "tonalRamp": [
+          "oklch(15% 0.0120 259.70)",
+          "oklch(26.43% 0.0120 259.70)",
+          "oklch(37.86% 0.0120 259.70)",
+          "oklch(49.29% 0.0120 259.70)",
+          "oklch(60.71% 0.0120 259.70)",
+          "oklch(72.14% 0.0120 259.70)",
+          "oklch(83.57% 0.0120 259.70)",
+          "oklch(95% 0.0120 259.70)"
+        ]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Painel",
+        "tonalRamp": [
+          "oklch(15% 0.0186 255.74)",
+          "oklch(26.43% 0.0186 255.74)",
+          "oklch(37.86% 0.0186 255.74)",
+          "oklch(49.29% 0.0186 255.74)",
+          "oklch(60.71% 0.0186 255.74)",
+          "oklch(72.14% 0.0186 255.74)",
+          "oklch(83.57% 0.0186 255.74)",
+          "oklch(95% 0.0186 255.74)"
+        ]
+      },
+      "raised": {
+        "role": "neutral",
+        "displayName": "Plano elevado",
+        "tonalRamp": [
+          "oklch(15% 0.0240 248.84)",
+          "oklch(26.43% 0.0240 248.84)",
+          "oklch(37.86% 0.0240 248.84)",
+          "oklch(49.29% 0.0240 248.84)",
+          "oklch(60.71% 0.0240 248.84)",
+          "oklch(72.14% 0.0240 248.84)",
+          "oklch(83.57% 0.0240 248.84)",
+          "oklch(95% 0.0240 248.84)"
+        ]
+      },
+      "ink": {
+        "role": "neutral",
+        "displayName": "Branco frio",
+        "tonalRamp": [
+          "oklch(15% 0.0062 255.47)",
+          "oklch(26.43% 0.0062 255.47)",
+          "oklch(37.86% 0.0062 255.47)",
+          "oklch(49.29% 0.0062 255.47)",
+          "oklch(60.71% 0.0062 255.47)",
+          "oklch(72.14% 0.0062 255.47)",
+          "oklch(83.57% 0.0062 255.47)",
+          "oklch(95% 0.0062 255.47)"
+        ]
+      },
+      "muted": {
+        "role": "neutral",
+        "displayName": "Cinza de leitura",
+        "tonalRamp": [
+          "oklch(15% 0.0258 251.95)",
+          "oklch(26.43% 0.0258 251.95)",
+          "oklch(37.86% 0.0258 251.95)",
+          "oklch(49.29% 0.0258 251.95)",
+          "oklch(60.71% 0.0258 251.95)",
+          "oklch(72.14% 0.0258 251.95)",
+          "oklch(83.57% 0.0258 251.95)",
+          "oklch(95% 0.0258 251.95)"
+        ]
+      },
+      "faint": {
+        "role": "neutral",
+        "displayName": "Metadado",
+        "tonalRamp": [
+          "oklch(15% 0.0285 251.76)",
+          "oklch(26.43% 0.0285 251.76)",
+          "oklch(37.86% 0.0285 251.76)",
+          "oklch(49.29% 0.0285 251.76)",
+          "oklch(60.71% 0.0285 251.76)",
+          "oklch(72.14% 0.0285 251.76)",
+          "oklch(83.57% 0.0285 251.76)",
+          "oklch(95% 0.0285 251.76)"
+        ]
+      },
+      "line": {
+        "role": "neutral",
+        "displayName": "Divisória",
+        "tonalRamp": [
+          "oklch(15% 0.0294 248.81)",
+          "oklch(26.43% 0.0294 248.81)",
+          "oklch(37.86% 0.0294 248.81)",
+          "oklch(49.29% 0.0294 248.81)",
+          "oklch(60.71% 0.0294 248.81)",
+          "oklch(72.14% 0.0294 248.81)",
+          "oklch(83.57% 0.0294 248.81)",
+          "oklch(95% 0.0294 248.81)"
+        ]
+      },
+      "blue": {
+        "role": "primary",
+        "displayName": "Azul da rede",
+        "tonalRamp": [
+          "oklch(15% 0.1275 238.51)",
+          "oklch(26.43% 0.1275 238.51)",
+          "oklch(37.86% 0.1275 238.51)",
+          "oklch(49.29% 0.1275 238.51)",
+          "oklch(60.71% 0.1275 238.51)",
+          "oklch(72.14% 0.1275 238.51)",
+          "oklch(83.57% 0.1275 238.51)",
+          "oklch(95% 0.1275 238.51)"
+        ]
+      },
+      "blue-deep": {
+        "role": "primary",
+        "displayName": "Azul profundo",
+        "tonalRamp": [
+          "oklch(15% 0.1578 255.20)",
+          "oklch(26.43% 0.1578 255.20)",
+          "oklch(37.86% 0.1578 255.20)",
+          "oklch(49.29% 0.1578 255.20)",
+          "oklch(60.71% 0.1578 255.20)",
+          "oklch(72.14% 0.1578 255.20)",
+          "oklch(83.57% 0.1578 255.20)",
+          "oklch(95% 0.1578 255.20)"
+        ]
+      },
+      "green": {
+        "role": "secondary",
+        "displayName": "Verde de geração",
+        "tonalRamp": [
+          "oklch(15% 0.2177 144.81)",
+          "oklch(26.43% 0.2177 144.81)",
+          "oklch(37.86% 0.2177 144.81)",
+          "oklch(49.29% 0.2177 144.81)",
+          "oklch(60.71% 0.2177 144.81)",
+          "oklch(72.14% 0.2177 144.81)",
+          "oklch(83.57% 0.2177 144.81)",
+          "oklch(95% 0.2177 144.81)"
+        ]
+      },
+      "green-deep": {
+        "role": "secondary",
+        "displayName": "Verde profundo",
+        "tonalRamp": [
+          "oklch(15% 0.1453 146.19)",
+          "oklch(26.43% 0.1453 146.19)",
+          "oklch(37.86% 0.1453 146.19)",
+          "oklch(49.29% 0.1453 146.19)",
+          "oklch(60.71% 0.1453 146.19)",
+          "oklch(72.14% 0.1453 146.19)",
+          "oklch(83.57% 0.1453 146.19)",
+          "oklch(95% 0.1453 146.19)"
+        ]
+      },
+      "red": {
+        "role": "secondary",
+        "displayName": "Vermelho térmico",
+        "tonalRamp": [
+          "oklch(15% 0.2343 23.93)",
+          "oklch(26.43% 0.2343 23.93)",
+          "oklch(37.86% 0.2343 23.93)",
+          "oklch(49.29% 0.2343 23.93)",
+          "oklch(60.71% 0.2343 23.93)",
+          "oklch(72.14% 0.2343 23.93)",
+          "oklch(83.57% 0.2343 23.93)",
+          "oklch(95% 0.2343 23.93)"
+        ]
+      },
+      "red-deep": {
+        "role": "secondary",
+        "displayName": "Vermelho profundo",
+        "tonalRamp": [
+          "oklch(15% 0.1812 12.36)",
+          "oklch(26.43% 0.1812 12.36)",
+          "oklch(37.86% 0.1812 12.36)",
+          "oklch(49.29% 0.1812 12.36)",
+          "oklch(60.71% 0.1812 12.36)",
+          "oklch(72.14% 0.1812 12.36)",
+          "oklch(83.57% 0.1812 12.36)",
+          "oklch(95% 0.1812 12.36)"
+        ]
+      },
+      "yellow": {
+        "role": "secondary",
+        "displayName": "Amarelo solar",
+        "tonalRamp": [
+          "oklch(15% 0.1728 88.56)",
+          "oklch(26.43% 0.1728 88.56)",
+          "oklch(37.86% 0.1728 88.56)",
+          "oklch(49.29% 0.1728 88.56)",
+          "oklch(60.71% 0.1728 88.56)",
+          "oklch(72.14% 0.1728 88.56)",
+          "oklch(83.57% 0.1728 88.56)",
+          "oklch(95% 0.1728 88.56)"
+        ]
+      },
+      "orange": {
+        "role": "secondary",
+        "displayName": "Laranja de demanda",
+        "tonalRamp": [
+          "oklch(15% 0.1931 48.62)",
+          "oklch(26.43% 0.1931 48.62)",
+          "oklch(37.86% 0.1931 48.62)",
+          "oklch(49.29% 0.1931 48.62)",
+          "oklch(60.71% 0.1931 48.62)",
+          "oklch(72.14% 0.1931 48.62)",
+          "oklch(83.57% 0.1931 48.62)",
+          "oklch(95% 0.1931 48.62)"
+        ]
+      },
+      "nuclear": {
+        "role": "neutral",
+        "displayName": "Cinza nuclear",
+        "tonalRamp": [
+          "oklch(15% 0.0320 249.77)",
+          "oklch(26.43% 0.0320 249.77)",
+          "oklch(37.86% 0.0320 249.77)",
+          "oklch(49.29% 0.0320 249.77)",
+          "oklch(60.71% 0.0320 249.77)",
+          "oklch(72.14% 0.0320 249.77)",
+          "oklch(83.57% 0.0320 249.77)",
+          "oklch(95% 0.0320 249.77)"
+        ]
+      },
+      "mmgd": {
+        "role": "secondary",
+        "displayName": "Laranja MMGD",
+        "tonalRamp": [
+          "oklch(15% 0.1574 60.74)",
+          "oklch(26.43% 0.1574 60.74)",
+          "oklch(37.86% 0.1574 60.74)",
+          "oklch(49.29% 0.1574 60.74)",
+          "oklch(60.71% 0.1574 60.74)",
+          "oklch(72.14% 0.1574 60.74)",
+          "oklch(83.57% 0.1574 60.74)",
+          "oklch(95% 0.1574 60.74)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Abertura",
+        "purpose": "Título do panorama com quebras responsivas."
+      },
+      "measurement": {
+        "displayName": "Medição",
+        "purpose": "Algarismos tabulares com unidade menor."
+      },
+      "identity": {
+        "displayName": "Identidade Pixel",
+        "purpose": "Sufixo da marca e intervenções curtas."
+      }
+    },
+    "shadows": [
+      {
+        "name": "dialog",
+        "value": "0 25px 80px #0008",
+        "purpose": "Somente o diálogo informativo sobreposto."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.16,1,.3,1)",
+        "purpose": "Chegada de mapa, vista e barra de reservatório."
+      },
+      {
+        "name": "beam",
+        "value": "9s linear infinite",
+        "purpose": "Feixes SVG; stroke-dashoffset final -720."
+      },
+      {
+        "name": "map-arrive",
+        "value": "1.2s cubic-bezier(.16,1,.3,1) both",
+        "purpose": "Chegada do mapa: opacidade .3 a 1, translateY 5px a 0."
+      },
+      {
+        "name": "view-arrive",
+        "value": ".45s cubic-bezier(.16,1,.3,1)",
+        "purpose": "Entrada da vista."
+      },
+      {
+        "name": "reservoir-width",
+        "value": "width .6s cubic-bezier(.16,1,.3,1)",
+        "purpose": "Mudança de leitura do reservatório."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media(prefers-reduced-motion:reduce){animation:none!important;transition:none!important;scroll-behavior:auto!important}",
+        "purpose": "Regra aplicada globalmente a elementos e pseudoelementos."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "wide-min",
+        "value": "1600px"
+      },
+      {
+        "name": "container-max",
+        "value": "1370px"
+      },
+      {
+        "name": "tablet-max",
+        "value": "1100px"
+      },
+      {
+        "name": "reading-rail-max",
+        "value": "800px"
+      },
+      {
+        "name": "mobile-max",
+        "value": "600px"
+      }
+    ]
+  },
+  "components": [
+    {
+      "name": "Botão",
+      "kind": "button",
+      "refersTo": "button",
+      "description": "Ação compacta com foco e estado pressionado.",
+      "html": "<button class=\"ds-btn\">Apresentar</button>",
+      "css": ".ds-btn{font:inherit;min-height:44px;height:44px;padding:0 17px;border:1px solid var(--line);border-radius:7px;box-shadow:none;gap:9px;background:var(--raised);color:var(--ink);font-size:14px;font-weight:500;text-transform:none}.ds-btn:hover{background:#21303d;border-color:#43596e}.ds-btn:active{transform:translateY(1px)}.ds-btn{font-family:var(--font-sans,Geist),Arial,sans-serif;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}.ds-btn:focus-visible{outline:2px solid var(--blue,#339bd6);outline-offset:5px}.ds-btn:disabled{opacity:.4;cursor:default}"
+    },
+    {
+      "name": "Botão ghost",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Ação auxiliar com fundo transparente.",
+      "html": "<button class=\"ds-btn ds-btn-ghost\">Atualizar</button>",
+      "css": ".ds-btn{font:inherit;min-height:44px;height:44px;padding:0 17px;border:1px solid var(--line);border-radius:7px;box-shadow:none;gap:9px;background:var(--raised);color:var(--ink);font-size:14px;font-weight:500;text-transform:none}.ds-btn:hover{background:#21303d;border-color:#43596e}.ds-btn:active{transform:translateY(1px)}.ds-btn{font-family:var(--font-sans,Geist),Arial,sans-serif;display:inline-flex;align-items:center;justify-content:center;cursor:pointer}.ds-btn:focus-visible{outline:2px solid var(--blue,#339bd6);outline-offset:5px}.ds-btn:disabled{opacity:.4;cursor:default}.ds-btn-ghost{background:transparent;border-color:transparent}.ds-btn-ghost:hover{background:var(--raised);border-color:transparent}"
+    },
+    {
+      "name": "Seleção de subsistema",
+      "kind": "chip",
+      "refersTo": "region-control",
+      "description": "Seleção expressa por tom e atributo acessível.",
+      "html": "<div class=\"ds-region-controls\"><button aria-pressed=\"true\">Brasil</button><button aria-pressed=\"false\">Norte</button></div>",
+      "css": ".ds-region-controls{display:flex;gap:5px;margin-bottom:18px;flex-wrap:wrap}.ds-region-controls button{font-size:13px;min-height:38px;padding:7px 15px;border:1px solid transparent;background:transparent;color:var(--muted);border-radius:6px}.ds-region-controls button:hover{background:var(--surface);color:var(--ink)}.ds-region-controls button[aria-pressed=true]{background:var(--raised);border-color:#344756;color:var(--ink)}.ds-region-controls{font-family:var(--font-sans,Geist),Arial,sans-serif;}.ds-region-controls button:focus-visible{outline:2px solid var(--blue,#339bd6);outline-offset:5px}@media(max-width:600px){.ds-region-controls button{font-size:11px;min-height:44px;padding:7px 8px}}"
+    },
+    {
+      "name": "Trilho de capítulos",
+      "kind": "nav",
+      "refersTo": "chapter-link",
+      "description": "Links com seleção tonal e trilho móvel.",
+      "html": "<nav class=\"ds-chapter-nav\" aria-label=\"Capítulos\"><a href=\"#pergunta\" aria-current=\"page\">Pergunta e hipótese</a><a href=\"#fundamentos\">Fundamentos</a></nav>",
+      "css": ".ds-chapter-nav{position:sticky;top:24px;display:flex;flex-direction:column;gap:3px}.ds-chapter-nav a{font-size:14px;color:var(--muted);padding:11px 14px;min-height:44px;border-radius:5px}.ds-chapter-nav a:hover{color:var(--ink);background:var(--surface)}.ds-chapter-nav a[aria-current=page]{background:var(--raised);color:var(--ink)}.ds-chapter-nav{font-family:var(--font-sans,Geist),Arial,sans-serif;position:static;max-width:230px}.ds-chapter-nav a{text-decoration:none}.ds-chapter-nav a:focus-visible{outline:2px solid var(--blue,#339bd6);outline-offset:5px}@media(max-width:800px){.ds-chapter-nav{max-width:100%;flex-direction:row;overflow-x:auto;gap:6px;padding-bottom:8px}.ds-chapter-nav a{white-space:nowrap;font-size:13px;background:var(--surface)}}"
+    },
+    {
+      "name": "Painel de medição",
+      "kind": "card",
+      "refersTo": "panel",
+      "description": "Hierarquia entre título, valor, unidade e explicação.",
+      "html": "<article class=\"ds-panel ds-generation-panel\"><div class=\"ds-panel-heading\"><h3>Geração por fonte</h3></div><div class=\"ds-generation-total\"><span class=\"ds-data-number\">86,4</span><span class=\"ds-unit\">GW</span></div><p class=\"ds-metric-description\">Potência instantânea · Brasil</p></article>",
+      "css": ".ds-panel{background:var(--surface);border:1px solid #23303c;border-radius:var(--radius);min-width:0;overflow:hidden}.ds-generation-panel{grid-column:span 6;padding:23px 25px;position:relative}.ds-panel-heading{display:flex;align-items:center;justify-content:space-between;gap:12px}.ds-panel-heading h3{font-size:15px;line-height:1.4;font-weight:500;letter-spacing:-.015em}.ds-generation-total{margin-top:9px;display:flex;align-items:baseline;gap:10px;line-height:1.15}.ds-data-number{font-family:var(--mono);font-variant-numeric:tabular-nums;letter-spacing:-.04em;font-weight:450}.ds-generation-total .ds-data-number{font-size:46px;letter-spacing:-.04em}.ds-unit{font-family:var(--mono);color:var(--muted);font-size:17px;letter-spacing:-.03em}.ds-metric-description{font-size:12px;margin-top:3px;color:var(--muted)}.ds-panel{font-family:var(--font-sans,Geist),Arial,sans-serif;color:var(--ink,#f4f7fb)}.ds-panel h3,.ds-panel p{margin:0}.ds-panel p{margin-top:3px}"
+    },
+    {
+      "name": "Nó do mapa",
+      "kind": "button",
+      "refersTo": "map-node",
+      "description": "Botão geográfico com carga e estado selecionado.",
+      "html": "<button class=\"ds-map-node\" aria-pressed=\"true\"><span class=\"ds-node-dot\"></span><span>Norte<small>7,2 GW de carga</small></span></button>",
+      "css": ".ds-map-node{position:absolute;display:flex;align-items:center;gap:9px;min-height:44px;padding:7px 10px;background:#0c141df2;border:1px solid #294458;border-radius:6px;text-align:left;font-size:13px;color:#eaf4fc;transition:background .2s,border-color .2s;white-space:nowrap;z-index:2}.ds-map-node:hover,.ds-map-node[aria-pressed=true]{border-color:#64b5e7;background:#142c40}.ds-node-dot{width:7px;height:7px;background:#54b8eb;border-radius:50%;position:relative}.ds-node-dot:after{content:'';position:absolute;inset:-4px;border:1px solid #339bd680;border-radius:50%}.ds-map-node small{display:block;font-family:var(--mono);font-size:11px;color:#9fbad0;margin-top:2px}.ds-map-node{font-family:var(--font-sans,Geist),Arial,sans-serif;position:relative;cursor:pointer}.ds-map-node:focus-visible{outline:2px solid var(--blue,#339bd6);outline-offset:5px}@media(prefers-reduced-motion:reduce){.ds-map-node{transition:none}}"
+    },
+    {
+      "name": "Disclosure de intercâmbios",
+      "kind": "custom",
+      "refersTo": "flow-disclosure",
+      "description": "Resumo nativo que abre a tabela compacta.",
+      "html": "<details class=\"ds-flow-disclosure\"><summary>Intercâmbios entre subsistemas</summary><div class=\"ds-flow-table\"><div><span>Norte</span><span>1,2 GW</span><span>0,8 GW</span></div></div></details>",
+      "css": ".ds-flow-disclosure{margin-top:16px;border:1px solid var(--line);border-radius:8px;background:var(--surface);padding:0 22px}.ds-flow-disclosure summary{display:flex;align-items:center;justify-content:space-between;gap:20px;min-height:60px;cursor:pointer;font-size:14px;list-style:none}.ds-flow-disclosure summary:after{content:'+';font:20px var(--mono);color:var(--blue)}.ds-flow-disclosure[open] summary:after{content:'−'}.ds-flow-table>div{display:grid;grid-template-columns:1.5fr 1fr 1fr;gap:20px;align-items:center;padding:11px 0;border-top:1px solid var(--line);font-size:13px}.ds-flow-table>div>span:not(:first-child){text-align:right;font-family:var(--mono)}.ds-flow-disclosure{font-family:var(--font-sans,Geist),Arial,sans-serif;color:var(--ink,#f4f7fb)}.ds-flow-disclosure summary:focus-visible{outline:2px solid var(--blue,#339bd6);outline-offset:5px}"
+    }
+  ],
+  "narrative": {
+    "northStar": "Um país interligado",
+    "overview": "A identidade cybercore trata a rede elétrica como um sistema legível: fundo quase preto, superfícies técnicas, dados monoespaçados e acentos de energia. A densidade serve à leitura acadêmica e à exploração de dados, com uma hierarquia clara entre argumento, medição e metadado.\n\nO bento é a estrutura informacional confirmada pelo usuário. Geist sustenta a leitura; Geist Mono distingue medições; Geist Pixel intervém na identidade. A mudança de família em elétrica.br é deliberada. Esta documentação registra o sistema implementado; o plano inicial em `../design.md` guarda a pesquisa e as decisões anteriores. Contexto do produto e regras de dados pertencem a `PRODUCT.md` e `surface-brief.md`.",
+    "keyCharacteristics": [
+      "Cybercore escuro com bordas sutis e painéis de densidade controlada.",
+      "Quatro pares de gradientes semânticos preservados do brief.",
+      "Leitura em Geist, medições em Geist Mono e identidade em Geist Pixel.",
+      "Seleção, estado e período comunicados por texto além de cor.",
+      "Movimento localizado na rede, com alternativa de movimento reduzido."
+    ],
+    "rules": [
+      {
+        "name": "The Semantic Gradient Rule",
+        "body": "Preserve os quatro pares em faixas, barras e superfícies de contexto; mantenha títulos e texto corrido em cor sólida. Cada fonte mantém nome e valor visíveis.",
+        "section": "colors"
+      },
+      {
+        "name": "The Measurement Rule",
+        "body": "Use Geist Mono e algarismos tabulares para medições. Preserve a unidade próxima ao valor, em tamanho menor.",
+        "section": "typography"
+      },
+      {
+        "name": "The Tracking Floor Rule",
+        "body": "Não aperte o espaçamento entre letras além de -0.04em; essa é a maior compressão presente no sistema final.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Panel Rule",
+        "body": "Preserve painéis sem sombra; reserve a sombra modal e o escurecimento de fundo para conteúdo sobreposto.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "**Do** preservar os quatro pares semânticos de gradiente e a base escura do frontmatter.",
+      "**Do** manter medidas em mono, com unidade menor e fonte/período legíveis.",
+      "**Do** distinguir seleção e estado por texto e atributos acessíveis além da cor.",
+      "**Do** preservar foco visível, controles nativos e movimento reduzido.",
+      "**Do** adaptar densidade, escala e trilho de capítulos às faixas responsivas implementadas."
+    ],
+    "donts": [
+      "**Don't** usar gradiente no texto de leitura ou trocar o papel das três famílias.",
+      "**Don't** comprimir tracking além do piso de -0.04em.",
+      "**Don't** acrescentar sombras aos painéis planos.",
+      "**Don't** transformar interligações esquemáticas em uma alegação de rotas físicas exatas.",
+      "**Don't** eliminar unidades, fonte ou período para tornar o painel mais limpo."
+    ]
+  }
+}

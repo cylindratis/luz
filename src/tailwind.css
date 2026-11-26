@@ -1,0 +1,7 @@
+@import "tailwindcss";
+@source "./*.html";
+@source "./*.js";
+@plugin "daisyui" {
+  themes: false;
+  include: button, tabs, badge, tooltip;
+}
