@@ -2,6 +2,7 @@ import { getJSON, number, REGIONS } from './data.js';
 import { editorialCase } from './texto.js';
 import { initFullscreen } from './tela-cheia.js';
 import { initMapFlow } from './mapa-fluxo.js';
+import { isHVDC, matchesLine } from './rede-transmissao.js';
 
 const metadataUrl = './data/mapa/camadas.json';
 const regionIds = { N: 'norte', NE: 'nordeste', 'SE-CO': 'sudesteECentroOeste', S: 'sul' };
@@ -76,6 +77,8 @@ export function initMap(selectRegion) {
   const feedback = document.querySelector('#map-feedback');
   const mapRegion = document.querySelector('#map-region');
   const mapMode = document.querySelector('#map-mode');
+  const mapVoltage = document.querySelector('#map-voltage');
+  const mapCurrent = document.querySelector('#map-current');
   const menu = document.querySelector('#map-layers');
   const feature = document.querySelector('#map-feature');
   const fullButton = document.querySelector('#map-fullscreen');
@@ -85,9 +88,11 @@ export function initMap(selectRegion) {
     if (active) legendBeforeFlow = layersDisclosure.open;
     layersDisclosure.open = !active && (legendBeforeFlow || fullButton.getAttribute('aria-pressed') === 'true');
   }, async () => {
-    const transmission = (await catalog).find(layer => layer.kind === 'line' && layer.mode === 'existente');
-    if (!transmission) throw new Error('linhas existentes indisponíveis');
-    return loadLayer(transmission);
+    const entries = await catalog;
+    const transmission = entries.find(layer => layer.kind === 'line' && layer.mode === 'existente');
+    const stations = entries.find(layer => layer.name === 'subestações' && layer.mode === 'existente');
+    if (!transmission || !stations) throw new Error('linhas ou subestações existentes indisponíveis');
+    return Promise.all([loadLayer(transmission), loadLayer(stations)]);
   });
   const selectedLayers = new Set(['transmissão', 'UHE', 'eólicas', 'solares']);
   const requests = new Map();
@@ -146,7 +151,8 @@ export function initMap(selectRegion) {
         ctx.strokeStyle = ctx.fillStyle = color(item.layer.mode === 'planejada' ? '--map-planned' : layerColors[item.layer.name]);
         if (item.layer.kind === 'line') {
           ctx.lineWidth = lineWidths[voltageClass(item.attributes.tensao)] / scale;
-          ctx.setLineDash(item.layer.mode === 'planejada' ? [3 / scale, 2 / scale] : []);
+          const pattern = isHVDC(item) ? [8, 3, 2, 3] : item.layer.mode === 'planejada' ? [3, 2] : [];
+          ctx.setLineDash(pattern.map(step => step / scale));
           ctx.stroke(item.path);
         } else {
           const radius = (zoom > 2 ? 2.7 : 1.8) / scale;
@@ -198,7 +204,8 @@ export function initMap(selectRegion) {
     feedback.hidden = true;
     const results = await Promise.allSettled(chosen.map(loadLayer));
     if (token !== revision) return;
-    visible = chosen.flatMap(layer => loaded.get(layer.id) || []);
+    const filters = { voltage: mapVoltage.value, current: mapCurrent.value };
+    visible = chosen.flatMap(layer => (loaded.get(layer.id) || []).filter(item => layer.kind !== 'line' || matchesLine(item, filters)));
     const failures = results.filter(x => x.status === 'rejected').length;
     showFeedback(failures === 1 ? 'uma camada indisponível' : failures ? `${failures} camadas indisponíveis` : '');
     scheduleDraw();
@@ -316,6 +323,15 @@ export function initMap(selectRegion) {
   }
   updateTooltip(mapRegion, 'subsistema');
   updateTooltip(mapMode, 'infraestrutura');
+  for (const [control, name] of [[mapVoltage, 'tensão'], [mapCurrent, 'corrente']]) {
+    updateTooltip(control, name);
+    control.addEventListener('change', () => {
+      updateTooltip(control, name);
+      showFeature(null);
+      flow.setFilters({ voltage: mapVoltage.value, current: mapCurrent.value });
+      renderLayers();
+    });
+  }
   mapMode.addEventListener('change', () => { updateTooltip(mapMode, 'infraestrutura'); showFeature(null); renderLayers(); });
   new ResizeObserver(scheduleDraw).observe(wrap);
   document.addEventListener('themechange', scheduleDraw);
@@ -355,7 +371,8 @@ export function initMap(selectRegion) {
     const voltage = document.createElement('div');
     voltage.className = 'voltage-key';
     voltage.innerHTML = '<p>tensão nominal</p>' + ['sem valor informado', 'até 230 kV', '231 a 499 kV', '500 kV ou mais']
-      .map((name, i) => `<span><i aria-hidden="true" style="--line-weight:${lineWidths[i]}px"></i>${name}</span>`).join('');
+      .map((name, i) => `<span><i aria-hidden="true" style="--line-weight:${lineWidths[i]}px"></i>${name}</span>`).join('') +
+      '<span class="hvdc-key"><i aria-hidden="true"></i>HVDC · corrente contínua</span>';
     menu.append(voltage);
     await renderLayers();
   }).catch(() => showFeedback('mapa indisponível no momento'));

@@ -1,13 +1,7 @@
 import { dateTime, getJSON, number, REGIONS, SOURCES } from './data.js';
 import { editorialCase } from './texto.js';
 import { corridorKey, locateCorridors } from './corredores.js';
-
-const positions = {
-  norte: [-57, -5.3],
-  nordeste: [-39.6, -8.9],
-  sudesteECentroOeste: [-48.3, -19],
-  sul: [-51.3, -28.4]
-};
+import { buildTransmissionNetwork, isHVDC, matchesLine, targets } from './rede-transmissao.js';
 const shortNames = Object.fromEntries(REGIONS.map(region => [region.id, editorialCase(region.short)]));
 const asGW = mw => `${number(mw / 1000, 2)} GW`;
 const generation = region => Object.values(region.sources).reduce((sum, value) => sum + value, 0);
@@ -19,17 +13,21 @@ function signed(mw) {
     { sign: '−', label: 'déficit', type: 'negative' };
 }
 
-function summarizePeriod(reading, corridors) {
+function summarizePeriod(reading, corridors, destinations) {
   const regions = REGIONS.map(({ id }) => {
     const area = reading.regions[id];
     const mw = balance(area);
     const state = signed(mw);
+    const target = targets[id];
+    const routes = destinations.get(id) || [];
+    const destination = routes.length ? `<div><dt>destino ilustrativo</dt><dd>${target.city} · ${target.station}</dd></div>` :
+      mw < 0 ? `<div><dt>rota para ${target.city}</dt><dd>indisponível neste recorte</dd></div>` : '';
     const sources = SOURCES.filter(source => source.id in area.sources).map(source =>
       `<div><dt>${editorialCase(source.name)}</dt><dd>${asGW(area.sources[source.id])}</dd></div>`).join('');
     return `<details class="exchange-region"><summary><span>${shortNames[id]}</span>
       <strong class="exchange-${state.type}"><span class="sr-only">${state.label}: </span>${state.sign === '=' ? '' : state.sign}${asGW(Math.abs(mw))}</strong></summary>
       <dl><div><dt>geração total</dt><dd>${asGW(generation(area))}</dd></div>
-      <div><dt>carga verificada</dt><dd>${asGW(area.load)}</dd></div>${sources}</dl></details>`;
+      <div><dt>carga verificada</dt><dd>${asGW(area.load)}</dd></div>${sources}${destination}</dl></details>`;
   }).join('');
   const links = reading.links.filter(link => link.mw > 0).map(link =>
     `<li><span>${shortNames[link.from]} <span aria-label="para">→</span> ${shortNames[link.to]}</span><strong>${asGW(link.mw)}</strong></li>`).join('');
@@ -37,7 +35,7 @@ function summarizePeriod(reading, corridors) {
   return `<p class="exchange-key"><span><b class="exchange-positive">+</b> saída líquida</span><span><b class="exchange-negative">−</b> entrada líquida</span></p>
     ${regions}<details class="exchange-links"><summary>intercâmbios verificados</summary>
     <ul>${links || '<li>sem intercâmbio líquido nas fronteiras</li>'}</ul></details>
-    <details class="exchange-circuits"><summary>linhas de transmissão exibidas</summary><ul>${circuits}</ul></details>`;
+    <details class="exchange-circuits"><summary>linhas de fronteira destacadas</summary><ul>${circuits || '<li>sem linhas de fronteira com os filtros atuais</li>'}</ul></details>`;
 }
 
 function projectTrace(coordinates, project, backwards) {
@@ -70,10 +68,14 @@ export function initMapFlow(panel, onToggle, loadTransmission) {
   const controls = panel.querySelector('#map-flow-panel');
   const reference = panel.querySelector('#map-flow-reference');
   const details = panel.querySelector('#map-flow-data');
+  const coverage = panel.querySelector('#map-flow-coverage');
   const periodButtons = [...controls.querySelectorAll('[data-flow-period]')];
   const reduced = matchMedia('(prefers-reduced-motion: reduce)');
   let data, camera, palette, frame, period = 'dia', active = false, inView = true;
-  let corridors = [], traces = [];
+  let filters = { voltage: 'all', current: 'all' }, corridors = [], traces = [], delivery = [];
+  let transmission, stations, network, stationPositions;
+  let neutralAC, neutralDC, activeLines = [];
+  let borders = [], destinations = new Map();
 
   function project([x, y]) {
     return { x: camera.left + x * camera.scale, y: camera.top - y * camera.scale };
@@ -81,15 +83,46 @@ export function initMapFlow(panel, onToggle, loadTransmission) {
 
   function projectPeriod() {
     if (!active || !camera || !data) return;
-    const links = new Map(data[period].links.map(link => [corridorKey(link.from, link.to), link]));
-    traces = corridors.flatMap(corridor => {
-      const link = links.get(corridor.key);
-      if (!link?.mw) return [];
-      return corridor.traces.map((trace, i) => ({
-        ...projectTrace(trace.coordinates, project, corridor.from !== link.from),
-        phase: i * 4 % 18
-      }));
-    });
+    traces = borders.map(({ trace, backwards }, i) => ({
+      ...projectTrace(trace.coordinates, project, backwards), phase: i * 4 % 18
+    }));
+    const sections = [...destinations.values()].flatMap(routes => routes.flatMap(route => route.sections));
+    const unique = new Map(sections.map(section => [`${section.name}/${section.coordinates[0]}`, section]));
+    delivery = [...unique.values()].map(section => projectTrace(section.coordinates, project, false));
+  }
+
+  function loadNetwork() {
+    activeLines = transmission.filter(item => Number(item.attributes.tensao) >= 500 && matchesLine(item, filters));
+    corridors = locateCorridors(activeLines);
+    const blocked = new Set(corridors.flatMap(corridor => corridor.traces.map(trace => trace.name)));
+    network = buildTransmissionNetwork(activeLines, stations, blocked);
+    neutralAC = new Path2D();
+    neutralDC = new Path2D();
+    for (const line of activeLines) {
+      const path = isHVDC(line) ? neutralDC : neutralAC;
+      for (const part of line.coords) {
+        if (part.length < 2) continue;
+        path.moveTo(part[0][0], -part[0][1]);
+        for (let i = 1; i < part.length; i++) path.lineTo(part[i][0], -part[i][1]);
+      }
+    }
+  }
+
+  function updateDestinations(reading) {
+    const keys = new Map(corridors.map(corridor => [corridor.key, corridor]));
+    destinations = new Map();
+    borders = [];
+    for (const link of reading.links) {
+      if (!link.mw) continue;
+      const corridor = keys.get(corridorKey(link.from, link.to));
+      if (!corridor) continue;
+      const backwards = corridor.from !== link.from;
+      borders.push(...corridor.traces.map(trace => ({ trace, backwards })));
+      if (balance(reading.regions[link.to]) >= 0) continue;
+      const entries = corridor.traces.map(trace => backwards ? trace.coordinates[0] : trace.coordinates.at(-1));
+      const route = network.findRoute(link.to, entries);
+      if (route) destinations.set(link.to, [...(destinations.get(link.to) || []), route]);
+    }
   }
 
   function draw(time = 0) {
@@ -102,11 +135,23 @@ export function initMapFlow(panel, onToggle, loadTransmission) {
     ctx.clearRect(0, 0, width, height);
     ctx.lineCap = 'round';
     ctx.lineJoin = 'round';
+    ctx.save();
+    ctx.transform(camera.scale, 0, 0, camera.scale, camera.left, camera.top);
+    ctx.globalAlpha = motion ? .35 + .13 * Math.sin(time / 600) : .38;
+    ctx.strokeStyle = palette.flow;
+    ctx.lineWidth = 1.05 / camera.scale;
+    ctx.setLineDash([]);
+    ctx.stroke(neutralAC);
+    ctx.strokeStyle = palette.delivery;
+    ctx.setLineDash([7, 3, 2, 3].map(step => step / camera.scale));
+    ctx.stroke(neutralDC);
+    ctx.restore();
 
     ctx.setLineDash([]);
     ctx.strokeStyle = palette.outline;
     ctx.lineWidth = 4.5;
     for (const { path } of traces) ctx.stroke(path);
+    for (const { path } of delivery) ctx.stroke(path);
     ctx.strokeStyle = palette.flow;
     ctx.lineWidth = 2.4;
     ctx.setLineDash([10, 8]);
@@ -114,6 +159,10 @@ export function initMapFlow(panel, onToggle, loadTransmission) {
       ctx.lineDashOffset = (motion ? -(time * .055 % 18) : 0) + phase;
       ctx.stroke(path);
     }
+    ctx.strokeStyle = palette.delivery;
+    ctx.setLineDash([4, 6]);
+    ctx.lineDashOffset = motion ? -(time * .055 % 10) : 0;
+    for (const { path } of delivery) ctx.stroke(path);
     ctx.setLineDash([]);
     for (const { marker } of traces) {
       if (!marker) continue;
@@ -135,20 +184,30 @@ export function initMapFlow(panel, onToggle, loadTransmission) {
     }
 
     for (const { id } of REGIONS) {
-      const { x, y } = project(positions[id]);
+      const point = stationPositions.get(targets[id].station);
+      if (!point) continue;
+      const route = destinations.get(id)?.[0];
+      const { x, y } = project(route?.sections.at(-1)?.coordinates.at(-1) || point);
       const state = signed(balance(reading.regions[id]));
       ctx.beginPath();
-      ctx.arc(x, y, 12, 0, Math.PI * 2);
+      ctx.arc(x, y, 9, 0, Math.PI * 2);
       ctx.lineWidth = 2;
       ctx.fillStyle = palette.surface;
       ctx.strokeStyle = palette[state.type];
       ctx.fill();
       ctx.stroke();
       ctx.fillStyle = palette[state.type];
-      ctx.font = '700 17px Geist, sans-serif';
+      ctx.font = '700 13px Geist, sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(state.sign, x, y + 1);
+      const labelX = Math.min(width - 50, Math.max(45, x)), labelY = y + 20;
+      ctx.font = '650 12px Geist, sans-serif';
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = palette.surface;
+      ctx.strokeText(targets[id].city, labelX, labelY);
+      ctx.fillStyle = palette.ink;
+      ctx.fillText(targets[id].city, labelX, labelY);
     }
     if (motion && inView && !document.hidden) frame = requestAnimationFrame(draw);
   }
@@ -165,7 +224,12 @@ export function initMapFlow(panel, onToggle, loadTransmission) {
     if (!reading) return;
     const overdue = Date.now() - Date.parse(reading.end) > 4 * 86400000;
     reference.textContent = `${dateTime(reading.start)} a ${dateTime(reading.end)} · brasília · médias do ONS${overdue ? ' · última leitura disponível' : ''}`;
-    details.innerHTML = summarizePeriod(reading, corridors);
+    updateDestinations(reading);
+    const hvdcCount = activeLines.filter(isHVDC).length;
+    coverage.textContent = activeLines.length ?
+      `${number(activeLines.length, 0)} traçados de 500 kV ou mais · ${number(hvdcCount, 0)} HVDC. as rotas em roxo ilustram o caminho até a subestação.` :
+      'nenhuma linha de 500 kV ou mais com os filtros atuais.';
+    details.innerHTML = summarizePeriod(reading, corridors, destinations);
     projectPeriod();
     redraw();
   }
@@ -180,9 +244,10 @@ export function initMapFlow(panel, onToggle, loadTransmission) {
       button.disabled = true;
       reference.textContent = 'carregando as médias do ONS…';
       try {
-        const [published, transmission] = await Promise.all([getJSON('./data/intercambios.json'), loadTransmission()]);
-        corridors = locateCorridors(transmission);
-        if (corridors.some(corridor => !corridor.traces.length)) throw new Error('corredor sem traçado');
+        const [published, layers] = await Promise.all([getJSON('./data/intercambios.json'), loadTransmission()]);
+        [transmission, stations] = layers;
+        stationPositions = new Map(stations.map(station => [station.attributes.nome, station.coords]));
+        loadNetwork();
         data = published;
       } catch {
         reference.textContent = 'dados indisponíveis. feche e reabra o painel para tentar novamente.';
@@ -206,10 +271,16 @@ export function initMapFlow(panel, onToggle, loadTransmission) {
   document.addEventListener('visibilitychange', redraw);
   return {
     get active() { return active; },
+    setFilters(next) {
+      filters = next;
+      if (!data) return;
+      loadNetwork();
+      if (active) setPeriod(period);
+    },
     sync(view, color) {
       camera = view;
       palette = {
-        flow: color('--flow-line'), outline: color('--flow-shadow'), surface: color('--surface'),
+        flow: color('--flow-line'), delivery: color('--plot-purple'), outline: color('--flow-shadow'), surface: color('--surface'), ink: color('--ink'),
         positive: color('--plot-green'), negative: color('--plot-orange'), neutral: color('--ink')
       };
       const w = Math.round(view.width * view.ratio), h = Math.round(view.height * view.ratio);

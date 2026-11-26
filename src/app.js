@@ -73,7 +73,7 @@ function renderReservoirs() {
           <g clip-path="url(#ear-clip-${region.id})"><g class="ear-level"><path class="ear-wave" d="${wave}"/></g></g>
           <path class="ear-border" d="${shape.path}"/>
         </svg>` : ''}
-      </div><div class="ear-measure"><strong></strong><span>${editorialCase(region.short)}</span></div></div>`;
+      </div><button class="ear-measure ear-select" type="button" aria-pressed="false" aria-label="filtrar ${editorialCase(region.name)}"><strong></strong><span>${editorialCase(region.short)}</span></button></div>`;
     }).join('');
   }
   for (const meter of meters.querySelectorAll('.ear-meter')) {
@@ -81,6 +81,7 @@ function renderReservoirs() {
     const value = reservoirs.regions[id].percent;
     const label = `${number(value)}%`;
     meter.classList.toggle('selected', id === currentRegion);
+    meter.querySelector('button').setAttribute('aria-pressed', String(id === currentRegion));
     meter.querySelector('strong').textContent = label;
     const vessel = meter.querySelector('.ear-vessel');
     vessel.setAttribute('aria-valuenow', value);
@@ -99,6 +100,10 @@ function selectRegion(id) {
   renderBalance(); renderReservoirs();
   $('#announcer').textContent = editorialCase(`Subsistema selecionado: ${id === 'brasil' ? 'Brasil' : REGIONS.find(r => r.id === id).name}`);
 }
+$('#reservoirs').addEventListener('click', event => {
+  const button = event.target.closest('.ear-select');
+  if (button) selectRegion(button.closest('[data-ear]').dataset.ear);
+});
 function renderFlows() {
   if (!rawBalance) return;
   $('#live-flows').hidden = false;

@@ -143,6 +143,7 @@ select { max-width: 100%; text-overflow: ellipsis; cursor: pointer; }
 .voltage-key p { color: var(--ink); font-weight: 650; }
 .voltage-key span { display: flex; gap: 8px; align-items: center; }
 #map-layers .voltage-key i { width: 20px; height: max(1px,var(--line-weight)); background: var(--map-line); }
+#map-layers .hvdc-key i { height: 2px; background: repeating-linear-gradient(to right,var(--map-line) 0 7px,transparent 7px 10px,var(--map-line) 10px 12px,transparent 12px 15px); }
 .map-flow-panel { min-width: 0; background: var(--surface); }
 .map-panel:not(:fullscreen,.panel-expanded) .map-flow-panel { position: absolute; top: 62px; right: 12px; width: min(262px,calc(100% - 24px)); max-height: calc(100% - 118px); overflow: auto; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
 .map-flow-panel h3 { font-size: 14px; text-align: left; }
@@ -163,6 +164,7 @@ select { max-width: 100%; text-overflow: ellipsis; cursor: pointer; }
 .exchange-region dl,.exchange-links ul { display: grid; gap: 4px; padding: 2px 0 8px; color: var(--muted); }
 .exchange-region dl > div,.exchange-links li { display: flex; justify-content: space-between; gap: 6px; }
 .exchange-region dd,.exchange-links li > strong { font: 550 11px var(--mono); white-space: nowrap; }
+.exchange-region dd { white-space: normal; text-align: end; }
 .exchange-links { margin-top: 6px; }
 .exchange-circuits ul { padding: 2px 0 8px 16px; list-style: disc; color: var(--muted); }
 .exchange-circuits li { margin: 4px 0; }
@@ -204,7 +206,8 @@ body:has(.panel-expanded) { overflow: hidden; }
 }
 .map-panel:is(:fullscreen,.panel-expanded) .map-actions { grid-row: 2; }
 .map-panel:is(:fullscreen,.panel-expanded) .map-actions button { display: inline-flex; align-items: center; gap: 7px; }
-.map-panel:is(:fullscreen,.panel-expanded) .map-controls { display: grid; }
+.map-panel:is(:fullscreen,.panel-expanded) .map-controls { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); }
+.map-panel:is(:fullscreen,.panel-expanded) .layer-menu { grid-column: 1 / -1; }
 .map-panel:is(:fullscreen,.panel-expanded) #map-layers {
   position: static;
   max-height: none;
@@ -218,8 +221,13 @@ body:has(.panel-expanded) { overflow: hidden; }
 .map-panel:is(:fullscreen,.panel-expanded) .map-wrap { grid-area: canvas; min-height: 0; }
 
 #reservoirs { grid-template-columns: repeat(4,minmax(0,1fr)); gap: 10px; margin-top: 10px; }
-.ear-meter { display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; gap: clamp(7px, 2vw, 24px); padding: 9px 11px; border: 1px solid transparent; border-radius: 8px; }
+.ear-meter { position: relative; display: grid; grid-template-columns: auto minmax(0,1fr); align-items: center; gap: clamp(7px, 2vw, 24px); padding: 9px 11px; border: 1px solid transparent; border-radius: 8px; }
 .ear-meter.selected { background: var(--raised); border-color: var(--line); }
+.ear-meter:hover { background: var(--raised); }
+.ear-meter:has(.ear-select:focus-visible) { outline: 2px solid var(--plot-blue); outline-offset: 2px; }
+.ear-select { text-align: inherit; padding: 0; background: transparent; border: 0; }
+.ear-select:focus-visible { outline: none; }
+.ear-select::after { content: ''; position: absolute; inset: 0; }
 .ear-vessel { display: grid; place-items: center; width: clamp(48px, 8vw, 104px); height: clamp(65px, 7vw, 78px); }
 .ear-map { display: block; width: 100%; height: 100%; }
 .ear-land { fill: var(--map-land); }
@@ -355,7 +363,7 @@ body:has(.panel-expanded) { overflow: hidden; }
   .map-panel:is(:fullscreen,.panel-expanded) #map-layers { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); max-height: min(19dvh,140px); }
   .map-panel:is(:fullscreen,.panel-expanded) #map-layers label { white-space: normal; }
   .map-panel:is(:fullscreen,.panel-expanded) .map-wrap { border-inline-start: 0; border-block-start: 1px solid var(--line); }
-  .map-panel:not(:fullscreen,.panel-expanded) .map-flow-panel { position: static; width: 100%; max-height: 230px; }
+  .map-panel:not(:fullscreen,.panel-expanded) .map-flow-panel { position: static; width: 100%; max-height: 290px; }
   .map-panel:has(#map-flow-toggle[aria-pressed="true"]) .map-zoom { flex-direction: column; align-items: flex-end; }
   #reservoirs { gap: 3px; }
   .ear-meter { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 8px; padding-inline: 3px; }
@@ -373,6 +381,7 @@ body:has(.panel-expanded) { overflow: hidden; }
   .map-sidebar { padding-inline: 10px; }
   .map-sidebar #map-title { flex-basis: 100%; }
   .map-panel:not(:fullscreen,.panel-expanded) .map-controls { margin-inline-start: auto; }
+  .map-panel:not(:fullscreen,.panel-expanded) .map-actions { margin-inline-start: auto; }
   .map-controls :is(select,summary) { font-size: 12px; }
   .cut-panel .flow-disclosure { padding-inline: 8px; }
 }

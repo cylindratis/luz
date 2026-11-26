@@ -19,8 +19,9 @@ Abra `http://127.0.0.1:4173`. A pasta `dist/` está pronta para hospedagem está
 - **Home** e **End** vão ao primeiro e último slide. **Esc** sai.
 - No panorama, escolha um subsistema para realçar sua infraestrutura e consultar geração, carga, energia armazenada e curtailment. O mapa tem filtros, zoom, detalhes por feição e tela cheia.
 - No mapa, o botão com pulso abre os intercâmbios entre regiões, com recortes de dia e noite. As setas seguem os vértices da camada de linhas existentes da EPE, no sentido líquido medido pelo ONS para cada corredor. Abra cada região para ver a geração por fonte, a carga e o saldo. Os circuitos exibidos estão no próprio painel e no cadastro em `src/corredores.js`. Na camada cartográfica, a largura das linhas indica classes de tensão nominal em kV.
+- A malha existente de 500 kV ou mais pulsa sem direção por linha. Quando há déficit, o mapa monta uma rota ilustrativa pelas linhas CA até Recife II (Recife), Lechuga (Manaus), Gravataí (Porto Alegre) ou Tijuco Preto (São Paulo). Os filtros de tensão e CA/HVDC também se aplicam à animação. O algoritmo conecta apenas extremidades cadastradas a até 1,15 km e exibe os traçados originais.
 - A série histórica e o sankey cobrem 1970 a 2025. Os cards de planejamento permitem trocar indicadores, cenários e recortes do PDE 2035 e do PNE 2055.
-- O botão de reprodução no sankey percorre os anos por fonte. Os medidores de energia armazenada usam os contornos dos subsistemas e têm tela cheia própria.
+- O botão de reprodução no sankey percorre os anos por fonte. Os medidores de energia armazenada usam os contornos dos subsistemas, têm tela cheia própria e selecionam o subsistema ao clicar.
 - **O trabalho** reúne a pergunta, a hipótese e os nove capítulos de desenvolvimento e conclusão.
 
 ## Atualização dos dados

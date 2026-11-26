@@ -6,6 +6,7 @@ import { extname, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { firefox } from '../.firefox-qa/node_modules/playwright/index.mjs';
 import { corridors, locateCorridors } from '../dist/corredores.js';
+import { buildTransmissionNetwork, isHVDC, targets } from '../dist/rede-transmissao.js';
 
 const root = fileURLToPath(new URL('../dist', import.meta.url));
 const pictures = new URL('../.firefox-qa/screenshots/', import.meta.url);
@@ -33,6 +34,9 @@ const exchanges = await fixture('intercambios.json');
 const layers = await fixture('mapa/camadas.json');
 const transmission = layers.find(item => item.kind === 'line' && item.mode === 'existente');
 const segments = (await fixture(`mapa/${transmission.id}.json`)).map(([coords, attributes]) => ({ coords, attributes }));
+const stationsLayer = layers.find(item => item.name === 'subestações' && item.mode === 'existente');
+const stations = (await fixture(`mapa/${stationsLayer.id}.json`)).map(([coords, attributes]) => ({ coords, attributes }));
+const highVoltage = segments.filter(item => item.attributes.tensao >= 500);
 const matches = locateCorridors(segments);
 const byName = new Map(segments.map(segment => [segment.attributes.nome, segment.coords[0]]));
 assert.equal(matches.length, 4);
@@ -44,6 +48,18 @@ matches.forEach((corridor, i) => {
     assert.deepEqual(trace.coordinates, reverse ? [...byName.get(name)].reverse() : byName.get(name));
   });
 });
+const routingCorridors = locateCorridors(highVoltage);
+const wantedCircuits = routingCorridors.reduce((count, corridor) => count + corridor.traces.length, 0);
+const network = buildTransmissionNetwork(highVoltage, stations, new Set(routingCorridors.flatMap(corridor => corridor.traces.map(trace => trace.name))));
+for (const [region, target] of Object.entries(targets)) {
+  for (const corridor of routingCorridors.filter(item => item.key.split('/').includes(region))) {
+    const entries = corridor.traces.map(trace => corridor.from === region ? trace.coordinates[0] : trace.coordinates.at(-1));
+    const path = network.findRoute(region, entries);
+    assert.equal(path?.target.station, target.station);
+    assert.ok(path.sections.length);
+    assert.ok(path.sections.every(part => highVoltage.some(line => line.attributes.nome === part.name && !isHVDC(line))));
+  }
+}
 const day = [cut.reference, balance.Data.slice(0, 10)].sort().at(-1);
 const instant = new Date(new Date(`${day}T18:00:00Z`).getTime() + 86400000);
 const rows = Array.from({ length: 901 }, (_, minute) => ({ c: [{ v: minute }, { v: 1000 + minute }] }));
@@ -116,6 +132,11 @@ try {
   await page.locator('#map-region').selectOption('nordeste');
   await page.waitForFunction(before => document.querySelector('#grid-map').toDataURL() !== before, imageBefore);
   assert.ok(await page.locator('[data-ear="nordeste"]').evaluate(el => el.classList.contains('selected')));
+  await page.locator('[data-ear="sul"] .ear-select').press('Enter');
+  assert.equal(await page.locator('#map-region').inputValue(), 'sul');
+  assert.equal(await page.locator('[data-ear="sul"] .ear-select').getAttribute('aria-pressed'), 'true');
+  await page.locator('[data-ear="nordeste"] .ear-select').click();
+  assert.equal(await page.locator('#map-region').inputValue(), 'nordeste');
   await page.waitForFunction(() => document.querySelector('#curve-status').textContent.includes('nordeste'));
   const wind = page.getByRole('button', { name: 'eólica', exact: true });
   await wind.click();
@@ -144,9 +165,11 @@ try {
   await page.locator('#map-flow-toggle').click();
   await page.locator('.exchange-region').first().waitFor();
   const circuits = page.locator('.exchange-circuits li');
-  assert.equal(await circuits.count(), corridors.reduce((count, corridor) => count + corridor.lines.length, 0));
+  assert.equal(await circuits.count(), wantedCircuits);
   assert.match(await circuits.allTextContents().then(names => names.join(' ')), /colinas.*ribeiro gonçalves.*ibiúna.*bateias/);
   assert.equal(await page.locator('.exchange-region').count(), 4);
+  const coverage = page.locator('#map-flow-coverage');
+  assert.match(await coverage.textContent(), new RegExp(`${highVoltage.length} traçados.*${highVoltage.filter(isHVDC).length} HVDC`));
   const reference = page.locator('#map-flow-reference');
   assert.match(await reference.textContent(), /06:00.*18:00/);
   const names = { norte: 'norte', nordeste: 'nordeste', sudesteECentroOeste: 'sudeste/CO', sul: 'sul' };
@@ -157,7 +180,7 @@ try {
   };
   await rowsByPeriod('dia');
   await page.locator('.exchange-region summary').first().click();
-  assert.match(await page.locator('.exchange-region[open] dl').textContent(), /geração total.*carga verificada.*hidráulica/s);
+  assert.match(await page.locator('.exchange-region[open] dl').textContent(), /geração total.*carga verificada.*hidráulica.*manaus.*SE Lechuga/s);
   const routes = page.locator('#flow-map');
   assert.ok(await routes.isVisible());
   const beforeNight = await routes.evaluate(el => el.toDataURL());
@@ -174,6 +197,16 @@ try {
   assert.notEqual(await routes.evaluate(el => el.toDataURL()), beforeNight);
   await rowsByPeriod('noite');
   await capture(page, 'intercambios-noite.png');
+  const current = page.locator('#map-current');
+  const voltage = page.locator('#map-voltage');
+  await current.selectOption('hvdc');
+  assert.match(await coverage.textContent(), new RegExp(`${highVoltage.filter(isHVDC).length} traçados`));
+  await voltage.selectOption('600');
+  assert.match(await coverage.textContent(), new RegExp(`${highVoltage.filter(item => isHVDC(item) && item.attributes.tensao === 600).length} traçados`));
+  await voltage.selectOption('230');
+  assert.match(await coverage.textContent(), /nenhuma linha de 500 kV/);
+  await current.selectOption('all');
+  await voltage.selectOption('all');
   await page.locator('#map-flow-toggle').click();
   await page.locator('#map-fullscreen').click();
   await page.waitForFunction(() => document.querySelector('#map-fullscreen').getAttribute('aria-pressed') === 'false');
@@ -252,9 +285,16 @@ try {
   await checkWidth(mobile);
   await mobile.keyboard.press('Escape');
   assert.equal(await mobile.locator('#map-fullscreen').getAttribute('aria-pressed'), 'false');
+  const deficit = structuredClone(exchanges);
+  const northeast = 'nordeste';
+  deficit.noite.regions[northeast].load = Object.values(deficit.noite.regions[northeast].sources).reduce((sum, value) => sum + value, 3000);
+  deficit.noite.links = deficit.noite.links.map(link => link.from === northeast ? { ...link, from: link.to, to: northeast } : link);
+  await mobile.route('**/data/intercambios.json', route => route.fulfill({ json: deficit }));
   await mobile.locator('#map-flow-toggle').click();
   await mobile.locator('[data-flow-period="noite"]').click();
   await mobile.waitForFunction(() => document.querySelector('#map-flow-reference').textContent.includes('18:00'));
+  await mobile.locator('.exchange-region').filter({ has: mobile.locator('summary', { hasText: 'nordeste' }) }).locator('summary').click();
+  assert.match(await mobile.locator('.exchange-region[open] dl').textContent(), /recife · SE Recife II/);
   await checkWidth(mobile);
   await capture(mobile, 'intercambios-celular.png');
   await mobile.locator('#map-flow-toggle').click();
