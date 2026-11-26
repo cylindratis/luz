@@ -1,5 +1,6 @@
 import { getJSON, number, REGIONS } from './data.js';
 import { editorialCase } from './texto.js';
+import { initFullscreen } from './tela-cheia.js';
 
 const metadataUrl = './data/mapa/camadas.json';
 const regionIds = { N: 'norte', NE: 'nordeste', 'SE-CO': 'sudesteECentroOeste', S: 'sul' };
@@ -63,12 +64,13 @@ export function initMap(selectRegion) {
   const ctx = canvas.getContext('2d');
   const panel = canvas.closest('.map-panel');
   const wrap = canvas.parentElement;
-  const status = document.querySelector('#map-status');
+  const feedback = document.querySelector('#map-feedback');
   const mapRegion = document.querySelector('#map-region');
   const mapMode = document.querySelector('#map-mode');
   const menu = document.querySelector('#map-layers');
   const feature = document.querySelector('#map-feature');
   const fullButton = document.querySelector('#map-fullscreen');
+  const layersDisclosure = menu.closest('details');
   const selectedLayers = new Set(['transmissão', 'UHE', 'eólicas', 'solares']);
   const requests = new Map();
   const loaded = new Map();
@@ -170,15 +172,23 @@ export function initMap(selectRegion) {
   async function renderLayers() {
     if (!layers.length) return;
     const token = ++revision;
+    menu.dataset.mode = mapMode.value;
     const chosen = layers.filter(layer => layer.kind !== 'polygon' && selectedLayers.has(layer.name) &&
       (layer.mode === 'neutra' || mapMode.value === 'todas' || layer.mode === mapMode.value));
-    status.textContent = 'carregando camadas…';
+    panel.setAttribute('aria-busy', 'true');
+    feedback.hidden = true;
     const results = await Promise.allSettled(chosen.map(loadLayer));
     if (token !== revision) return;
     visible = chosen.flatMap(layer => loaded.get(layer.id) || []);
     const failures = results.filter(x => x.status === 'rejected').length;
-    status.textContent = `${number(visible.length, 0)} elementos ativos${failures ? ` · ${failures} camadas indisponíveis` : ''}`;
+    showFeedback(failures === 1 ? 'uma camada indisponível' : failures ? `${failures} camadas indisponíveis` : '');
     scheduleDraw();
+  }
+
+  function showFeedback(message) {
+    panel.setAttribute('aria-busy', 'false');
+    feedback.textContent = message;
+    feedback.hidden = !message;
   }
 
   function showFeature(item) {
@@ -240,32 +250,11 @@ export function initMap(selectRegion) {
     scheduleDraw();
   }
 
-  function fullState() {
-    const active = document.fullscreenElement === panel || panel.classList.contains('map-expanded');
-    fullButton.setAttribute('aria-pressed', String(active));
-    fullButton.textContent = active ? 'sair da tela cheia' : 'tela cheia';
+  let previouslyOpen;
+  initFullscreen(fullButton, active => {
+    if (active) previouslyOpen = layersDisclosure.open;
+    layersDisclosure.open = active || previouslyOpen;
     scheduleDraw();
-  }
-  fullButton.addEventListener('click', async () => {
-    if (document.fullscreenElement === panel) await document.exitFullscreen();
-    else if (panel.classList.contains('map-expanded')) panel.classList.remove('map-expanded');
-    else {
-      try {
-        if (!panel.requestFullscreen) throw new Error('tela cheia indisponível');
-        await panel.requestFullscreen();
-      } catch {
-        panel.classList.add('map-expanded');
-      }
-    }
-    fullState();
-  });
-  document.addEventListener('fullscreenchange', fullState);
-  document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && panel.classList.contains('map-expanded')) {
-      panel.classList.remove('map-expanded');
-      fullState();
-      fullButton.focus();
-    }
   });
   for (const [id, factor] of [['map-add', 1.35], ['map-sub', 1 / 1.35]]) {
     document.querySelector('#' + id).addEventListener('click', () => changeZoom(factor));
@@ -310,11 +299,17 @@ export function initMap(selectRegion) {
     layers = catalog;
     const layer = layers.find(item => item.kind === 'polygon');
     regions = await loadLayer(layer);
-    const categories = [...new Set(layers.filter(item => item.kind !== 'polygon').map(item => item.name))];
-    for (const name of categories) {
+    const categories = new Map(layers.filter(item => item.kind !== 'polygon').map(item => [item.name, item]));
+    const planned = document.createElement('p');
+    planned.className = 'planned-key';
+    planned.innerHTML = '<i aria-hidden="true"></i>expansão planejada';
+    menu.append(planned);
+    for (const [name, layer] of categories) {
       const label = document.createElement('label'), input = document.createElement('input');
       const swatch = document.createElement('i');
       swatch.style.setProperty('--swatch', `var(${layerColors[name]})`);
+      label.dataset.kind = layer.kind;
+      label.classList.toggle('legend-neutral', layer.mode === 'neutra');
       input.type = 'checkbox';
       input.checked = selectedLayers.has(name);
       input.addEventListener('change', () => {
@@ -322,11 +317,11 @@ export function initMap(selectRegion) {
         showFeature(null);
         renderLayers();
       });
-      label.append(input, swatch, ' ' + name);
+      label.append(input, swatch, editorialCase(name));
       menu.append(label);
     }
     await renderLayers();
-  }).catch(() => { status.textContent = 'mapa indisponível no momento'; });
+  }).catch(() => showFeedback('mapa indisponível no momento'));
 
   return {
     setRegion(id) {

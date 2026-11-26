@@ -14,14 +14,9 @@ let currentChapter = 'introducao', slideIndex = 0, previousFocus;
 let madrid = [];
 const map = initMap(selectRegion);
 const operation = initOperation();
-const stateMessages = { loading: 'Consultando ONS', live: 'Conectado ao ONS', stale: 'Medição defasada', saved: 'Leitura salva', error: 'Fonte indisponível' };
-
 function renderBalance() {
-  const status = $('#connection-status');
-  const state = rawBalance && balanceMode === 'live' && freshness(rawBalance.Data).stale ? 'stale' : balanceMode;
-  status.className = `status is-${state}`;
-  status.innerHTML = `<span></span>${editorialCase(stateMessages[state])}`;
   if (!rawBalance) return;
+  const state = balanceMode === 'live' && freshness(rawBalance.Data).stale ? 'stale' : balanceMode;
   const data = selectBalance(rawBalance, currentRegion);
   $('#generation-value').textContent = number(data.total / 1000);
   $('#load-value').textContent = number(data.load / 1000);
@@ -38,11 +33,12 @@ function renderBalance() {
     negativeNote.textContent = 'Resíduo negativo da fonte preservado; barras partem de zero.';
   } else negativeNote?.remove();
   const prefix = state === 'saved' ? 'Leitura salva' : state === 'stale' ? 'Medição defasada' : 'Medição ONS';
-  $('#balance-reference').textContent = `${prefix}: ${dateTime(data.date)} (Brasília). Consulta automática a cada 60 s.`;
+  const time = `${dateTime(data.date)} (brasília)`;
+  $('#reading-balance').textContent = editorialCase(`${prefix} de ${time}. consulta automática a cada 60 s.`);
   const notice = $('#fetch-notice');
   notice.hidden = state === 'live';
-  if (state === 'saved') notice.textContent = 'A consulta ao ONS não foi concluída. Exibindo a última leitura disponível, com a data acima. Use Atualizar para tentar novamente.';
-  if (state === 'stale') notice.textContent = 'O ONS respondeu, mas o horário da medição está defasado em mais de 15 minutos ou é incompatível com o relógio. A próxima consulta ocorrerá automaticamente.';
+  if (state === 'saved') notice.textContent = `consulta ao ONS indisponível. leitura salva de ${time}.`;
+  if (state === 'stale') notice.textContent = `medição do ONS defasada ou com horário incompatível. leitura de ${time}.`;
   renderFlows();
   normalizeText($('.system-section'));
 }
@@ -52,14 +48,30 @@ function renderReservoirs() {
   $('#ear-value').textContent = number(percent);
   $('#ear-track').style.width = percent + '%';
   $('#ear-date').textContent = civilDate(reservoirs.date);
-  $('#reservoirs').innerHTML = REGIONS.map(region => `<div class="reservoir-cell ${region.id === currentRegion ? 'selected' : ''}"><div><span>${region.short}</span><strong>${number(reservoirs.regions[region.id].percent)}<small>%</small></strong></div><div class="reservoir-track"><span style="width:${reservoirs.regions[region.id].percent}%"></span></div></div>`).join('');
+  const meters = $('#reservoirs');
+  if (!meters.firstElementChild.matches('.ear-meter')) {
+    meters.innerHTML = REGIONS.map(region => `<div class="ear-meter" data-ear="${region.id}">
+      <div class="ear-vessel" role="meter" aria-label="${editorialCase(region.name)}" aria-valuemin="0" aria-valuemax="100">
+        <div class="ear-water" aria-hidden="true"><svg viewBox="0 0 120 8" preserveAspectRatio="none"><path d="M0 4Q15 0 30 4T60 4T90 4T120 4V8H0Z"/></svg></div>
+      </div><div class="ear-measure"><strong></strong><span>${editorialCase(region.short)}</span></div></div>`).join('');
+  }
+  for (const meter of meters.children) {
+    const id = meter.dataset.ear;
+    const value = reservoirs.regions[id].percent;
+    const label = `${number(value)}%`;
+    meter.classList.toggle('selected', id === currentRegion);
+    meter.querySelector('strong').textContent = label;
+    const vessel = meter.querySelector('.ear-vessel');
+    vessel.setAttribute('aria-valuenow', value);
+    vessel.setAttribute('aria-valuetext', label);
+    vessel.style.setProperty('--ear', `${value}%`);
+  }
   const old = Date.now() - Date.parse(reservoirs.date + 'T12:00:00-03:00') > 4 * 86400000;
-  $('#reservoir-reference').textContent = `ONS · ${civilDate(reservoirs.date)} de ${reservoirs.date.slice(0, 4)} · referência diária${reservoirMode !== 'live' ? ' · leitura salva' : ''}${old ? ' · referência antiga' : ''}`;
+  $('#reading-reservoirs').textContent = `ONS · ${civilDate(reservoirs.date)} de ${reservoirs.date.slice(0, 4)} · referência diária${reservoirMode !== 'live' ? ' · leitura salva' : ''}${old ? ' · referência antiga' : ''}`;
   normalizeText($('.reservoir-panel'));
 }
 function selectRegion(id) {
   currentRegion = id;
-  $$('[data-region]').forEach(button => button.setAttribute('aria-pressed', String(button.dataset.region === id)));
   map.setRegion(id);
   operation.setRegion(id);
   renderBalance(); renderReservoirs();
@@ -86,8 +98,8 @@ async function refreshData(force = false) {
   refreshing = false; $('#refresh').disabled = false;
   renderBalance(); renderReservoirs();
   operation.refresh(rawBalance?.Data);
-  if (!rawBalance) { $('#source-list').innerHTML = '<p class="loading-copy">Não foi possível obter o balanço. Use Atualizar para tentar novamente.</p>'; $('#balance-reference').textContent = 'Balanço indisponível. Nenhum valor foi estimado.'; }
-  if (!reservoirs) { $('#reservoirs').innerHTML = '<p class="loading-copy">Reservatórios indisponíveis. Use Atualizar para tentar novamente.</p>'; $('#ear-value').textContent = '—'; }
+  if (!rawBalance) { $('#source-list').innerHTML = '<p class="loading-copy">balanço indisponível. use atualizar para tentar novamente.</p>'; $('#reading-balance').textContent = 'balanço indisponível.'; }
+  if (!reservoirs) { $('#reservoirs').innerHTML = '<p class="loading-copy">reservatórios indisponíveis. use atualizar para tentar novamente.</p>'; $('#reading-reservoirs').textContent = 'referência diária indisponível.'; $('#ear-value').textContent = '—'; }
   normalizeText($('.system-section'));
 }
 
@@ -133,7 +145,7 @@ function route({ focus = false } = {}) {
   for (const name of ['panorama','trabalho']) $('#view-'+name).hidden = view !== name;
   $$('[data-route]').forEach(a=>{a.removeAttribute('aria-current');if(a.dataset.route===view)a.setAttribute('aria-current','page');});
   if (view === 'trabalho' && requested === 'trabalho') renderChapter(id || 'introducao');
-  if (!section && (activeView !== view || view === 'trabalho')) window.scrollTo({top:0,behavior:'instant'});
+  if (!section && (activeView !== view || requested === 'panorama' || view === 'trabalho')) window.scrollTo({top:0,behavior:'instant'});
   activeView = view;
   if (requested === 'fontes') section.open = true;
   if (section) requestAnimationFrame(() => section.scrollIntoView({ block: 'start' }));
@@ -160,11 +172,10 @@ function renderSlide() {
   $('#presentation').scrollTop = 0;
 }
 function changeSlide(delta) { const next=Math.min(Math.max(0,slideIndex+delta),slides().length-1); if(next!==slideIndex){slideIndex=next;renderSlide();$('#slide-title').focus({preventScroll:true});} }
-function openPresentation() { if(!madrid.length || document.fullscreenElement || document.querySelector('.map-expanded'))return;previousFocus=document.activeElement;slideIndex=0;renderSlide();$('#presentation').showModal();document.body.style.overflow='hidden';$('#close-presentation').focus(); }
+function openPresentation() { if(!madrid.length || document.fullscreenElement || document.querySelector('.panel-expanded'))return;previousFocus=document.activeElement;slideIndex=0;renderSlide();$('#presentation').showModal();document.body.style.overflow='hidden';$('#close-presentation').focus(); }
 function closePresentation() { $('#presentation').close();document.body.style.overflow='';previousFocus?.focus(); }
 
 document.addEventListener('click', event=>{
-  const region=event.target.closest('[data-region]');if(region)selectRegion(region.dataset.region);
   const segment=event.target.closest('[data-segment]');if(segment)selectSegment(segment.dataset.segment);
 });
 document.addEventListener('keydown',event=>{

@@ -1,5 +1,6 @@
 import { getJSON, number } from './data.js';
 import { editorialCase } from './texto.js';
+import { initFullscreen } from './tela-cheia.js';
 
 const $ = selector => document.querySelector(selector);
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({
@@ -131,14 +132,17 @@ function sankey(container, year) {
   svg += `<rect x="328" y="${mid}" width="12" height="183" class="sankey-center"/><text x="334" y="${mid - 18}" text-anchor="middle">oferta elétrica</text></svg>`;
   container.innerHTML = svg;
   attachTable(container, ['origem ou destino', 'energia (GWh)'], [...input, ...output].map(([k,v]) => [k, number(v, 2)]));
-  $('#sankey-status').textContent = `${year.ano} · GWh · EPE, tabela 2.30${Math.abs(year.diferenca) > .5 ? ` · saldo de ${number(year.diferenca, 2)} GWh` : ''}`;
 }
 
 export async function initHistorical() {
   const history = await getJSON('./data/historico.json');
   const metric = $('#history-series'), year = $('#sankey-year');
+  const byYear = new Map(history.map(row => [row.ano, row]));
   setOptions(metric, [['balanco', 'produção, consumo e perdas'], ['fontes', 'geração por fonte'], ['consumo', 'consumo por setor'], ['intercambio', 'importação e exportação']]);
-  setOptions(year, [...history].reverse().map(row => [row.ano, String(row.ano)]));
+  year.min = $('#sankey-first').textContent = history[0].ano;
+  year.max = $('#sankey-last').textContent = history.at(-1).ano;
+  year.value = year.max;
+  year.disabled = false;
   const pick = (name, value) => ({ name, points: history.map(row => [row.ano, value(row) ?? null]) });
   const draw = () => {
     const lines = {
@@ -152,9 +156,14 @@ export async function initHistorical() {
       return Number.isFinite(value) ? value / 1000 : null;
     })), { label: 'série histórica da eletricidade', unit: 'TWh' });
   };
-  const drawFlow = () => sankey($('#sankey-chart'), history.find(row => row.ano === Number(year.value)));
+  const drawFlow = () => {
+    $('#sankey-selection').value = year.value;
+    sankey($('#sankey-chart'), byYear.get(year.valueAsNumber));
+  };
   metric.addEventListener('change', draw);
-  year.addEventListener('change', drawFlow);
+  year.addEventListener('input', drawFlow);
+  initFullscreen($('#history-fullscreen'));
+  initFullscreen($('#sankey-fullscreen'));
   draw();
   drawFlow();
 }

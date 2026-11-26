@@ -1,4 +1,4 @@
-import { getJSON, number } from './data.js';
+import { getJSON, number, REGIONS } from './data.js';
 import { lineChart } from './graficos.js';
 import { editorialCase } from './texto.js';
 
@@ -9,10 +9,13 @@ const regionCodes = {
   sudesteECentroOeste: 'SudesteECentroOeste', sul: 'Sul'
 };
 const sourceColors = {
-  Hidraulica: ['hidráulica', 'var(--plot-blue)'], Eolica: ['eólica', 'var(--plot-green)'],
-  Solar: ['solar', 'var(--plot-orange)'], Termica: ['térmica', 'var(--plot-red)'],
-  Nuclear: ['nuclear', 'var(--plot-ink)'], Mmgd: ['MMGD', 'var(--plot-purple)']
+  total: ['total', 'var(--plot-blue)', 'energy'],
+  Hidraulica: ['hidráulica', 'var(--plot-blue)', 'water'], Eolica: ['eólica', 'var(--plot-green)', 'wind'],
+  Solar: ['solar', 'var(--plot-orange)', 'solar'], Termica: ['térmica', 'var(--plot-red)', 'thermal'],
+  Nuclear: ['nuclear', 'var(--plot-ink)', 'nuclear'], Mmgd: ['MMGD', 'var(--plot-purple)', 'distributed']
 };
+const curveSources = Object.keys(sourceColors).filter(id => id !== 'total');
+const regionLabel = id => editorialCase(REGIONS.find(region => region.id === id)?.short || 'SIN');
 const clock = new Intl.DateTimeFormat('en-CA', {
   timeZone: 'America/Sao_Paulo', year: 'numeric', month: '2-digit', day: '2-digit',
   hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
@@ -70,7 +73,7 @@ function renderCuts(raw, region, days) {
     }
   }
   const sum = totals.solar + totals.eolica;
-  const area = editorialCase(region === 'brasil' ? 'SIN' : document.querySelector(`[data-region="${region}"]`)?.textContent || region);
+  const area = regionLabel(region);
   if (!common.length) { $('#cut-chart').textContent = 'sem período comum nas bases do ONS'; return; }
   const names = { REL: 'indisponibilidade externa', CNF: 'confiabilidade', ENE: 'razão energética', PAR: 'parecer de acesso', outros: 'sem código publicado' };
   const list = Object.entries(reasons).filter(([, v]) => v > 0).sort((a,b) => b[1]-a[1])
@@ -84,25 +87,28 @@ function renderCuts(raw, region, days) {
 }
 
 export function initOperation() {
-  const sourceControl = $('#curve-source'), cutPeriod = $('#cut-period');
+  const sourceControl = $('#curve-sources'), cutPeriod = $('#cut-period');
   let region = 'brasil', measuredAt, cutData;
-  let curve = null, revision = 0;
-  sourceControl.replaceChildren(
-    new Option('total', 'total'),
-    ...Object.entries(sourceColors).map(([id, [label]]) => new Option(label, id))
-  );
+  let curve = null, revision = 0, source = 'total';
+  sourceControl.innerHTML = Object.entries(sourceColors).map(([id, [label, color, icon]]) =>
+    `<button class="control source-button" type="button" data-curve-source="${id}" aria-pressed="${id === source}" style="--source-color:${color}"><svg class="icon" aria-hidden="true"><use href="#i-${icon}"/></svg><span>${label}</span></button>`
+  ).join('');
+  function selectSource(id) {
+    source = id;
+    for (const button of sourceControl.children) button.setAttribute('aria-pressed', String(button.dataset.curveSource === source));
+    renderCurves();
+  }
   cutPeriod.replaceChildren(new Option('7 dias', 7), new Option('30 dias', 30));
   const renderCurves = () => {
     if (!curve || curve.region !== region) return;
-    const source = sourceControl.value;
-    const label = source === 'total' ? 'total' : sourceColors[source]?.[0];
+    const [label, color] = sourceColors[source];
     const points = mergeCurve(curve.parts, curve.minute, source);
-    lineChart($('#curve-chart'), [{ name: label, points, color: sourceColors[source]?.[1] }], {
+    lineChart($('#curve-chart'), [{ name: label, points, color }], {
       label: 'curva de geração do dia', unit: 'MW', timeName: 'horário de Brasília',
       first: 0, last: 1440, ticks: [0, 360, 720, 1080, 1440], labelFormat: minuteLabel, decimals: 0
     });
     const last = points.findLast(([, value]) => Number.isFinite(value))?.[0];
-    const area = region === 'brasil' ? 'SIN' : editorialCase(document.querySelector(`[data-region="${region}"]`)?.textContent || region);
+    const area = regionLabel(region);
     const now = localClock(new Date());
     const delayed = Number(now.hour) * 60 + Number(now.minute) - last > 15;
     const freshness = curve.saved || curve.day !== localDay(new Date()) ? ' · última leitura disponível' : delayed ? ' · medição defasada' : '';
@@ -124,7 +130,7 @@ export function initOperation() {
     }
     const selected = region;
     const task = ++revision;
-    const eligible = Object.keys(sourceColors).filter(id => id !== 'Nuclear' || ['brasil','sudesteECentroOeste'].includes(selected));
+    const eligible = curveSources.filter(id => id !== 'Nuclear' || ['brasil','sudesteECentroOeste'].includes(selected));
     try {
       const entries = await Promise.all(eligible.map(async id => [
         id, parseCurve(await getJSON(endpoint + `Geracao_${regionCodes[selected]}_${id}`))
@@ -145,7 +151,10 @@ export function initOperation() {
       }
     }
   }
-  sourceControl.addEventListener('change', renderCurves);
+  sourceControl.addEventListener('click', event => {
+    const button = event.target.closest('[data-curve-source]');
+    if (button) selectSource(button.dataset.curveSource);
+  });
   const updateCuts = () => { if (cutData) renderCuts(cutData, region, Number(cutPeriod.value)); };
   cutPeriod.addEventListener('change', updateCuts);
   getJSON('./data/curtailment.json').then(raw => {
@@ -160,8 +169,9 @@ export function initOperation() {
       if (id === region) return;
       region = id;
       revision++;
-      sourceControl.querySelector('option[value="Nuclear"]').hidden = !['brasil','sudesteECentroOeste'].includes(id);
-      if (sourceControl.selectedOptions[0]?.hidden) sourceControl.value = 'total';
+      const nuclear = sourceControl.querySelector('[data-curve-source="Nuclear"]');
+      nuclear.hidden = !['brasil','sudesteECentroOeste'].includes(id);
+      if (nuclear.hidden && source === 'Nuclear') selectSource('total');
       $('#curve-chart').innerHTML = '<p class="chart-empty">consultando o subsistema…</p>';
       $('#curve-status').textContent = '';
       refresh();
