@@ -22,8 +22,6 @@
         <div class="section-toolbar">
           <div><h1 id="system-heading">setor elétrico brasileiro</h1><p class="panorama-byline">por guilherme v. borges e thales c. pahim</p></div>
           <div class="panorama-actions">
-            <a class="btn btn-ghost" href="#trabalho" data-route="trabalho">o trabalho</a>
-            <button id="refresh" type="button" class="btn btn-ghost refresh-btn"><svg class="icon" aria-hidden="true"><use href="#i-refresh"/></svg>atualizar</button>
             <button class="btn btn-ghost" id="theme-toggle" type="button" aria-pressed="false" aria-label="ativar modo claro" title="ativar modo claro"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg></button>
             <button class="btn present-btn" id="present" type="button"><svg class="icon" aria-hidden="true"><use href="#i-present"/></svg><span>apresentar</span><kbd>p</kbd></button>
           </div>
@@ -39,14 +37,18 @@
               <details class="layer-menu"><summary title="camadas e legenda"><svg class="icon" aria-hidden="true"><use href="#i-layers"/></svg><span>camadas e legenda</span></summary><div id="map-layers"></div></details>
             </div>
             <div class="map-actions">
-              <button class="control map-flow-toggle" id="map-flow-toggle" type="button" aria-pressed="false" title="fluxo das sete usinas"><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg><span>fluxo das sete usinas</span></button>
+              <button class="control map-flow-toggle" id="map-flow-toggle" type="button" aria-pressed="false" aria-controls="map-flow-panel" title="intercâmbios entre regiões"><svg class="icon" aria-hidden="true"><use href="#i-pulse"/></svg><span>intercâmbios entre regiões</span></button>
               <button class="control fullscreen-button" id="map-fullscreen" type="button" aria-pressed="false" title="tela cheia"><svg class="icon" aria-hidden="true"><use href="#i-fullscreen"/></svg><span>tela cheia</span></button>
             </div>
-            <details class="experiment-ranking" id="flow-ranking" hidden>
-              <summary>maiores geradores no período</summary>
-              <p>recorte fornecido · datas do período não informadas. os pulsos ilustram linhas próximas às usinas.</p>
-              <ol id="flow-plants"></ol>
-            </details>
+            <section class="map-flow-panel" id="map-flow-panel" aria-labelledby="map-flow-title" hidden>
+              <h3 id="map-flow-title">intercâmbios entre regiões</h3>
+              <div class="flow-period" role="group" aria-label="período do intercâmbio">
+                <button class="control" type="button" data-flow-period="dia" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg>dia</button>
+                <button class="control" type="button" data-flow-period="noite" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-moon"/></svg>noite</button>
+              </div>
+              <p id="map-flow-reference" class="flow-reference" role="status"></p>
+              <div id="map-flow-data"></div>
+            </section>
             </div>
             <div class="map-wrap">
               <canvas id="grid-map" tabindex="0" role="img" aria-label="mapa da infraestrutura elétrica da EPE. use as setas para deslocar e os botões para ajustar o zoom."></canvas>
@@ -127,7 +129,8 @@
       <section class="footer-method"><h2>dados e metodologia</h2>
         <ul>
           <li>cartografia do <a href="https://www.epe.gov.br/pt/publicacoes-dados-abertos/publicacoes/webmap-epe">webmap EPE</a>. as 22 camadas incluem transmissão, subestações, usinas, sistemas isolados e limites do SIN. a rede de distribuição local não consta dos arquivos fornecidos. as geometrias foram simplificadas para visualização.</li>
-          <li>as linhas são diferenciadas pela tensão nominal do cadastro em kV. os limites operativos por linha em MW ou MVA não constam da base usada. o fluxo das sete usinas usa traçados existentes a até 35 km de cada usina e os GWh do recorte fornecido. é uma ilustração, sem medição de carga ou direção nos circuitos. <a href="https://dados.ons.org.br/dataset/linha-transmissao">cadastro de linhas do ONS</a></li>
+          <li>as linhas são diferenciadas pela tensão nominal do cadastro em kV. os limites operativos por linha em MW ou MVA não constam da base usada. <a href="https://dados.ons.org.br/dataset/linha-transmissao">cadastro de linhas do ONS</a></li>
+          <li>o mapa de intercâmbios usa a média de 12 horas do último dia completo em comum nas duas bases do ONS (CC BY). compara o dia das 06h às 18h com a noite anterior das 18h às 06h, no horário de Brasília. o saldo de cada subsistema é a geração publicada por fonte menos a carga verificada. as setas seguem o sentido líquido medido nos corredores, com traçado esquemático. um subsistema pode receber em um corredor e enviar em outro. <a href="https://dados.ons.org.br/dataset/balanco-energia-subsistema">balanço horário</a> · <a href="https://dados.ons.org.br/dataset/intercambio-nacional">intercâmbio horário</a></li>
           <li><a href="https://www.ons.org.br/paginas/energia-agora/carga-e-geracao">curva intradiária do ONS</a> em MW, com minutos em horário de Brasília. o total soma as categorias de geração disponíveis no escopo, incluindo MMGD quando publicada.</li>
           <li>curtailment com as bases abertas do ONS para <a href="https://dados.ons.org.br/dataset/restricao_coff_eolica_usi">eólica</a> e <a href="https://dados.ons.org.br/dataset/restricao_coff_fotovoltaica">solar</a> sob licença CC BY. a geração não realizada apurada (GNRa) do ONS em MW médios é convertida em MWh em intervalos de 30 minutos e somada por dia, fonte, subsistema e motivo publicado. confira a cobertura e a data no gráfico.</li>
           <li>série histórica e sankey derivados das tabelas 2.30 e 5.3 da planilha histórica fornecida. os valores do sankey usam GWh, o saldo do balanço aparece quando relevante e a oferta é agregada antes do detalhamento por consumo.</li>
@@ -150,7 +153,6 @@
   <noscript><p class="noscript">Ative o JavaScript para explorar os dados e os capítulos. <a href="./assets/trabalho.pdf">Você pode ler o trabalho completo em PDF.</a></p></noscript>
   <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>
     <symbol id="i-present" viewBox="0 0 24 24"><path d="M3 4h18M5 4v12h14V4M12 16v5m-4 0 4-5 4 5M10 8l5 3-5 3z"/></symbol>
-    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5M5.5 7a8 8 0 0 1 13-1l1.5 2M4 16l1.5 2a8 8 0 0 0 13-1"/></symbol>
     <symbol id="i-energy" viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 10-13h-7z"/></symbol>
     <symbol id="i-pulse" viewBox="0 0 24 24"><path d="M2 12h5l3-8 4 16 3-8h5"/></symbol>
     <symbol id="i-water" viewBox="0 0 24 24"><path d="M12 3c-3 5-7 8-7 12a7 7 0 0 0 14 0c0-4-4-7-7-12ZM8 15c0 2 1 3 3 3"/></symbol>

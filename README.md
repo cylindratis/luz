@@ -18,7 +18,7 @@ Abra `http://127.0.0.1:4173`. A pasta `dist/` está pronta para hospedagem está
 - Use as setas esquerda/direita, Page Up/Page Down ou os botões para navegar pelos 35 slides do roteiro Madrid de 40 minutos.
 - **Home** e **End** vão ao primeiro e último slide. **Esc** sai.
 - No panorama, escolha um subsistema para realçar sua infraestrutura e consultar geração, carga, energia armazenada e curtailment. O mapa tem filtros, zoom, detalhes por feição e tela cheia.
-- No mapa, o botão com pulso abre o experimento das sete usinas fornecidas. Os pulsos seguem traçados existentes da EPE próximos às usinas e ilustram movimento. A largura das linhas indica classes de tensão nominal em kV, conforme a legenda. O ranking usa o recorte fornecido, sem data de referência informada.
+- No mapa, o botão com pulso abre os intercâmbios entre regiões, com recortes de dia e noite. As setas indicam o intercâmbio líquido medido pelo ONS. Abra cada região para ver a geração por fonte, a carga e o saldo. Na camada cartográfica, a largura das linhas indica classes de tensão nominal em kV.
 - A série histórica e o sankey cobrem 1970 a 2025. Os cards de planejamento permitem trocar indicadores, cenários e recortes do PDE 2035 e do PNE 2055.
 - O botão de reprodução no sankey percorre os anos por fonte. Os medidores de energia armazenada usam os contornos dos subsistemas e têm tela cheia própria.
 - **O trabalho** reúne a pergunta, a hipótese e os nove capítulos de desenvolvimento e conclusão.
@@ -50,7 +50,7 @@ O curtailment usa a geração não realizada apurada nas bases oficiais de eóli
 
 Para regenerar as bases da atualização com os insumos originais em `../proximo passo/`, use `python scripts/prepare-observatorio.py` com `openpyxl`, `pyshp` e `pypdf`. `python scripts/prepare-curtailment.py` atualiza a cópia local dos cortes de geração.
 
-Após atualizar as camadas da EPE, execute `node scripts/prepare-visuals.mjs` para refazer as silhuetas de EAR e os traçados do experimento.
+Após atualizar as camadas da EPE, execute `node scripts/prepare-visuals.mjs` para refazer as silhuetas de EAR. `python scripts/prepare-intercambios.py` cruza as duas bases horárias do ONS e atualiza o último par completo de 12 horas. O fluxo do GitHub Pages repete a atualização diária e usa a leitura salva quando a consulta falha.
 
 ## Validação
 

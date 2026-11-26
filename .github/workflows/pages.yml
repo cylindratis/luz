@@ -48,6 +48,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/configure-pages@v5
+      - name: Atualizar o mapa de intercâmbios do ONS
+        run: |
+          if timeout 4m python3 scripts/prepare-intercambios.py --out "$RUNNER_TEMP/intercambios.json"; then
+            cp "$RUNNER_TEMP/intercambios.json" dist/data/intercambios.json
+          else
+            echo '::warning::ONS indisponível. Mantida a leitura de intercâmbio incluída no repositório.'
+          fi
       - name: Atualizar os cortes de geração do ONS
         run: |
           if timeout 6m python3 scripts/prepare-curtailment.py --out "$RUNNER_TEMP/curtailment.json"; then

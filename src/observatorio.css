@@ -18,8 +18,7 @@
   --plot-red: #f0819a;
   --plot-ink: #b8c7d8;
   --plot-purple: #bd9df2;
-  --flow-hydro: #94ddff;
-  --flow-nuclear: #f0b8ff;
+  --flow-line: #94ddff;
   --flow-shadow: #0b2438;
   --ear-wave: #339bd6;
 }
@@ -52,8 +51,7 @@
   --plot-red: #a60a3d;
   --plot-ink: #3c5166;
   --plot-purple: #634891;
-  --flow-hydro: #005181;
-  --flow-nuclear: #78306c;
+  --flow-line: #005181;
   --flow-shadow: #edf3f7;
   --ear-wave: #1575b9;
 }
@@ -90,6 +88,7 @@
 .map-panel .map-wrap { min-height: 300px; margin: 0; }
 #grid-map { display: block; position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
 #flow-map { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+.map-panel:has(#map-flow-toggle[aria-pressed="true"]) #grid-map:not(:focus-visible) { opacity: .65; }
 #grid-map:active { cursor: grabbing; }
 #grid-map:focus-visible { outline: 2px solid var(--plot-blue); outline-offset: -3px; }
 .map-controls,.map-actions { display: flex; gap: 6px; align-items: center; }
@@ -144,17 +143,26 @@ select { max-width: 100%; text-overflow: ellipsis; cursor: pointer; }
 .voltage-key p { color: var(--ink); font-weight: 650; }
 .voltage-key span { display: flex; gap: 8px; align-items: center; }
 #map-layers .voltage-key i { width: 20px; height: max(1px,var(--line-weight)); background: var(--map-line); }
-.experiment-ranking { min-width: 0; background: var(--surface); }
-.map-panel:not(:fullscreen,.panel-expanded) .experiment-ranking { position: absolute; top: 66px; right: 12px; width: min(370px,calc(100% - 24px)); max-height: 75%; overflow: auto; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; }
-.experiment-ranking summary { cursor: pointer; min-height: 38px; align-content: center; font-size: 14px; font-weight: 650; }
-.experiment-ranking p { font-size: 12px; }
-#flow-plants { list-style: decimal; padding-inline-start: 22px; margin: 8px 0; }
-#flow-plants li::marker { color: var(--plot-blue); font: 650 12px var(--mono); }
-#flow-plants button { display: grid; grid-template-columns: minmax(0,1fr) auto; gap: 3px 8px; width: 100%; min-height: 44px; padding: 6px 7px; border: 1px solid transparent; border-radius: 5px; background: transparent; text-align: left; font-size: 12px; }
-#flow-plants button:hover,#flow-plants button[aria-pressed="true"] { border-color: var(--line); background: var(--raised); }
-#flow-plants button > span { grid-column: 1 / -1; }
-#flow-plants button > small { font-size: 11px; color: var(--muted); }
-#flow-plants button > strong { font: 700 11px var(--mono); white-space: nowrap; }
+.map-flow-panel { min-width: 0; background: var(--surface); }
+.map-panel:not(:fullscreen,.panel-expanded) .map-flow-panel { position: absolute; top: 62px; right: 12px; width: min(262px,calc(100% - 24px)); max-height: calc(100% - 118px); overflow: auto; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
+.map-flow-panel h3 { font-size: 14px; text-align: left; }
+.flow-period { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 6px; margin-block: 9px; }
+.flow-period button { display: inline-flex; justify-content: center; align-items: center; gap: 7px; }
+.flow-period button[aria-pressed="true"] { background: var(--raised); border-color: var(--plot-blue); }
+.flow-period .icon { width: 16px; height: 16px; }
+.flow-reference,.exchange-key { font-size: 12px; }
+.exchange-key { display: flex; flex-wrap: wrap; gap: 5px 12px; margin-block: 8px 5px; }
+.exchange-key b { font: 700 15px var(--mono); }
+.exchange-positive { color: var(--plot-green); }
+.exchange-negative { color: var(--plot-orange); }
+.exchange-region,.exchange-links { border-top: 1px solid var(--line); font-size: 12px; }
+.exchange-region summary,.exchange-links summary { min-height: 36px; align-content: center; cursor: pointer; list-style-position: inside; }
+.exchange-region summary:hover,.exchange-links summary:hover { background: var(--raised); }
+.exchange-region summary strong { float: right; margin-inline-start: 6px; font: 650 12px var(--mono); white-space: nowrap; }
+.exchange-region dl,.exchange-links ul { display: grid; gap: 4px; padding: 2px 0 8px; color: var(--muted); }
+.exchange-region dl > div,.exchange-links li { display: flex; justify-content: space-between; gap: 6px; }
+.exchange-region dd,.exchange-links li > strong { font: 550 11px var(--mono); white-space: nowrap; }
+.exchange-links { margin-top: 6px; }
 .map-zoom { position: absolute; display: flex; right: 12px; bottom: 12px; gap: 5px; }
 .map-zoom .control { min-width: 40px; }
 .map-feature { position: absolute; left: 12px; bottom: 59px; max-height: 70%; width: min(370px, calc(100% - 24px)); overflow: auto; padding: 13px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
@@ -344,6 +352,8 @@ body:has(.panel-expanded) { overflow: hidden; }
   .map-panel:is(:fullscreen,.panel-expanded) #map-layers { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); max-height: min(19dvh,140px); }
   .map-panel:is(:fullscreen,.panel-expanded) #map-layers label { white-space: normal; }
   .map-panel:is(:fullscreen,.panel-expanded) .map-wrap { border-inline-start: 0; border-block-start: 1px solid var(--line); }
+  .map-panel:not(:fullscreen,.panel-expanded) .map-flow-panel { position: static; width: 100%; max-height: 230px; }
+  .map-panel:has(#map-flow-toggle[aria-pressed="true"]) .map-zoom { flex-direction: column; align-items: flex-end; }
   #reservoirs { gap: 3px; }
   .ear-meter { grid-template-columns: 1fr; justify-items: center; text-align: center; gap: 8px; padding-inline: 3px; }
   .ear-measure span { font-size: 11px; }
@@ -360,7 +370,6 @@ body:has(.panel-expanded) { overflow: hidden; }
   .map-sidebar { padding-inline: 10px; }
   .map-sidebar #map-title { flex-basis: 100%; }
   .map-panel:not(:fullscreen,.panel-expanded) .map-controls { margin-inline-start: auto; }
-  .map-panel:not(:fullscreen,.panel-expanded) .experiment-ranking { top: 88px; }
   .map-controls :is(select,summary) { font-size: 12px; }
   .cut-panel .flow-disclosure { padding-inline: 8px; }
 }

@@ -111,10 +111,10 @@ function resetGenerationTimer() {
   if (!reducedMotion.matches) fill.animate([{ transform: 'translateY(0px)' }, { transform: 'translateY(24px)' }],
     { duration: refreshInterval, fill: 'forwards' });
 }
-async function refreshData(force = false) {
+async function refreshData() {
   if (refreshing) return;
-  refreshing = true; $('#refresh').disabled = true;
-  const shouldQueryReservoirs = force || Date.now() - lastReservoirQuery >= 3600000;
+  refreshing = true;
+  const shouldQueryReservoirs = Date.now() - lastReservoirQuery >= 3600000;
   const jobs = [getJSON(BALANCE_URL).then(validateBalance).then(raw => {
     if (!rawBalance || Date.parse(raw.Data) >= Date.parse(rawBalance.Data)) {
       rawBalance = raw;
@@ -124,11 +124,11 @@ async function refreshData(force = false) {
   }).catch(() => { balanceMode = rawBalance ? 'saved' : 'error'; })];
   if (shouldQueryReservoirs) jobs.push(getJSON(RESERVOIR_URL).then(normalizeReservoirs).then(data => { if (!reservoirs || data.date >= reservoirs.date) reservoirs = data; reservoirMode = 'live'; lastReservoirQuery = Date.now(); }).catch(() => { reservoirMode = reservoirs ? 'saved' : 'error'; }));
   await Promise.allSettled(jobs);
-  refreshing = false; $('#refresh').disabled = false;
+  refreshing = false;
   renderBalance(); renderReservoirs();
   operation.refresh(rawBalance?.Data);
-  if (!rawBalance) { $('#source-list').innerHTML = '<p class="loading-copy">balanço indisponível. use atualizar para tentar novamente.</p>'; $('#reading-balance').textContent = 'balanço indisponível.'; }
-  if (!reservoirs) { $('#reservoirs').innerHTML = '<p class="loading-copy">reservatórios indisponíveis. use atualizar para tentar novamente.</p>'; $('#reading-reservoirs').textContent = 'referência diária indisponível.'; $('#ear-value').textContent = '—'; }
+  if (!rawBalance) { $('#source-list').innerHTML = '<p class="loading-copy">balanço indisponível. a consulta será repetida automaticamente.</p>'; $('#reading-balance').textContent = 'balanço indisponível.'; }
+  if (!reservoirs) { $('#reservoirs').innerHTML = '<p class="loading-copy">reservatórios indisponíveis. a consulta será repetida automaticamente.</p>'; $('#reading-reservoirs').textContent = 'referência diária indisponível.'; $('#ear-value').textContent = '—'; }
   normalizeText($('.system-section'));
 }
 
@@ -172,7 +172,6 @@ function route({ focus = false } = {}) {
   const section = ['historico', 'planejamento', 'cut-title', 'curve-title', 'fontes'].includes(requested) ? document.getElementById(requested) : null;
   const view = requested === 'trabalho' ? 'trabalho' : requested === 'fontes' && activeView ? activeView : 'panorama';
   for (const name of ['panorama','trabalho']) $('#view-'+name).hidden = view !== name;
-  $$('[data-route]').forEach(a=>{a.removeAttribute('aria-current');if(a.dataset.route===view)a.setAttribute('aria-current','page');});
   if (view === 'trabalho' && requested === 'trabalho') renderChapter(id || 'introducao');
   if (!section && (activeView !== view || requested === 'panorama' || view === 'trabalho')) window.scrollTo({top:0,behavior:'instant'});
   activeView = view;
@@ -213,7 +212,6 @@ document.addEventListener('keydown',event=>{
   const segment=event.target.closest('[data-segment]');
   if(segment&&['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const ids=editorial.segments.map(s=>s.id),idx=ids.indexOf(segment.dataset.segment);selectSegment(event.key==='Home'?ids[0]:event.key==='End'?ids.at(-1):ids[(idx+(event.key==='ArrowRight'?1:-1)+ids.length)%ids.length],true);}
 });
-$('#refresh').addEventListener('click',()=>refreshData(true));
 $('#data-notes').addEventListener('click',()=>$('#data-dialog').showModal());
 $('#dialog-notes-link').addEventListener('click',()=>$('#data-dialog').close());
 $('#present').addEventListener('click',openPresentation);
@@ -222,7 +220,7 @@ $('#presentation').addEventListener('cancel',event=>{event.preventDefault();clos
 $('#previous-slide').addEventListener('click',()=>changeSlide(-1));$('#next-slide').addEventListener('click',()=>changeSlide(1));
 window.addEventListener('hashchange',()=>route({focus:true}));
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshData();});
-window.addEventListener('online',()=>refreshData(true));
+window.addEventListener('online',()=>refreshData());
 setInterval(()=>{if(!document.hidden)refreshData();},refreshInterval);
 reducedMotion.addEventListener('change', () => { if (rawBalance) resetGenerationTimer(); });
 setInterval(()=>{if(!document.hidden)renderBalance();},30000);
