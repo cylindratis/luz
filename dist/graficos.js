@@ -35,7 +35,8 @@ export function lineChart(container, series, options) {
   if (!all.length) { container.innerHTML = '<p class="chart-empty">sem dados para esta seleção.</p>'; return; }
   const labels = [...new Set(all.map(p => p[0]))].sort((a, b) => a - b);
   const first = options.first ?? labels[0], last = options.last ?? labels.at(-1);
-  const left = 70, right = 610, top = 22, bottom = 202;
+  const height = options.height ?? 235;
+  const left = 70, right = 610, top = 22, bottom = height - 33;
   const values = all.map(p => p[1]);
   let min = Math.min(0, ...values), max = Math.max(0, ...values);
   if (min === max) max += 1;
@@ -45,9 +46,9 @@ export function lineChart(container, series, options) {
   const marksY = Array.from({ length: 5 }, (_, i) => min + ((max - min) / 4) * i);
   const valueFormat = options.valueFormat ?? (value => number(value, options.decimals ?? 1));
   const labelFormat = options.labelFormat ?? String;
-  const svg = `<svg class="plot" viewBox="0 0 630 235" role="img" aria-label="${names(options.label)} (${escape(options.unit)})">
+  const svg = `<svg class="plot" viewBox="0 0 630 ${height}" role="img" aria-label="${names(options.label)} (${escape(options.unit)})">
     ${marksY.map(value => `<line x1="${left}" x2="${right}" y1="${y(value)}" y2="${y(value)}"/><text text-anchor="end" x="${left - 9}" y="${y(value) + 4}">${valueFormat(value)}</text>`).join('')}
-    ${marksX.map(time => `<text text-anchor="middle" x="${x(time)}" y="224">${names(labelFormat(time))}</text>`).join('')}
+    ${marksX.map(time => `<text text-anchor="middle" x="${x(time)}" y="${height - 11}">${names(labelFormat(time))}</text>`).join('')}
     <text x="${left}" y="15" class="plot-unit">${names(options.unit)}</text>
     ${series.map((line, i) => {
       let move = true;
@@ -172,7 +173,7 @@ export async function initHistorical() {
     lineChart($('#history-chart'), lines[metric.value].map(([name, f]) => pick(name, row => {
       const value = f(row);
       return Number.isFinite(value) ? value / 1000 : null;
-    })), { label: 'série histórica da eletricidade', unit: 'TWh' });
+    })), { label: 'série histórica da eletricidade', unit: 'TWh', height: 350 });
   };
   const drawFlow = () => {
     $('#sankey-selection').value = year.value;

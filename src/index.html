@@ -20,10 +20,10 @@
     <div id="view-panorama" class="view">
       <section class="system-section" aria-labelledby="system-heading">
         <div class="section-toolbar">
-          <div><h1 id="system-heading">setor elétrico brasileiro</h1><p class="panorama-byline">por guilherme v. borges e thales c. pahim</p></div>
+          <div><h1 id="system-heading">setor elétrico brasileiro</h1><p class="panorama-byline">por guilherme v. borges</p><p id="offline-notice" hidden>versão offline · dados salvos</p></div>
           <div class="panorama-actions">
             <button class="btn btn-ghost" id="theme-toggle" type="button" aria-pressed="false" aria-label="ativar modo claro" title="ativar modo claro"><svg class="icon" aria-hidden="true"><use href="#i-sun"/></svg></button>
-            <button class="btn present-btn" id="present" type="button"><svg class="icon" aria-hidden="true"><use href="#i-present"/></svg><span>apresentar</span><kbd>p</kbd></button>
+            <a class="btn present-btn" id="present" href="./assets/ecoind-1.pdf" target="_blank" rel="noopener" aria-label="apresentar em PDF, nova aba"><svg class="icon" aria-hidden="true"><use href="#i-present"/></svg><span>apresentar</span><kbd>p</kbd></a>
           </div>
         </div>
 
@@ -111,10 +111,6 @@
           </article>
         </div>
       </section>
-      <section class="analysis-section" id="planejamento" aria-labelledby="planning-title">
-        <h2 id="planning-title">horizontes do sistema</h2>
-        <div class="analysis-grid" id="plan-charts"></div>
-      </section>
     </div>
 
     <div id="view-trabalho" class="view" hidden>
@@ -126,10 +122,14 @@
   </main>
 
   <footer class="site-footer observatory-footer">
-    <div class="footer-main"><a class="footer-mark" href="#panorama">elétrica.br</a>
+    <div class="footer-main">
       <p data-preserve-case>trabalho desenvolvido na cadeira Economia Industrial (ECO-02003), ministrada pela Profª. Drª. Ana Lúcia Tatsch para o curso de Ciências Econômicas da Universidade Federal do Rio Grande do Sul.</p>
-      <p class="byline" data-preserve-case>por Guilherme V. Borges e Thales C. Pahim</p>
+      <p class="byline" data-preserve-case>por Guilherme V. Borges</p>
     </div>
+    <a id="offline-download" class="text-link" href="./luz-offline.html" download>baixar versão offline</a>
+    <details id="planejamento" class="footer-notes"><summary>horizontes do sistema</summary>
+      <div class="analysis-grid" id="plan-charts"></div>
+    </details>
     <details id="fontes" class="footer-notes"><summary>fontes e notas</summary>
       <section class="footer-method"><h2>dados e metodologia</h2>
         <ul>
@@ -142,7 +142,7 @@
           <li>PDE 2035 e PNE 2055 usam as planilhas fornecidas da EPE com cenário, indicador e unidade identificados nos gráficos. o ano-base dos planos segue a classificação da fonte.</li>
         </ul>
         <h2>uso de IAG</h2>
-        <p>o ChatGPT, família de modelos 6 sol, auxiliou no planejamento da interface, na elaboração do código, na transformação dos dados e na adaptação do material para a web. as fontes primárias estão indicadas junto aos dados. a autoria do trabalho acadêmico é de guilherme v. borges e thales c. pahim.</p>
+        <p>o ChatGPT, família de modelos 6 sol, auxiliou no planejamento da interface, na elaboração do código, na transformação dos dados e na adaptação do material para a web. as fontes primárias estão indicadas junto aos dados.</p>
       </section>
       <div class="sources-grid"><section class="panel"><h2>Operação em tempo real</h2><p>O balanço é consultado diretamente no serviço público do ONS a cada 60 segundos, enquanto a página está visível. Os valores em GW representam potência instantânea, convertida dos MW da fonte.</p><p>Dados operacionais são sujeitos a revisão. Uma resposta à consulta não garante que a medição seja recente: após 15 minutos, o painel sinaliza a defasagem.</p><a href="https://www.ons.org.br/paginas/energia-agora/balanco-de-energia" target="_blank" rel="noopener">Balanço de Energia do ONS</a></section>
       <section class="panel"><h2>Reservatórios</h2><p>A energia armazenada (EAR) é a energia que pode ser obtida da água disponível nos reservatórios equivalentes. O nível nas silhuetas representa a porcentagem de EAR. Os contornos são os dos subsistemas elétricos da EPE.</p><p>A referência é diária; a consulta é renovada a cada hora. O índice do SIN é informado pela fonte, sem fazer uma média simples dos subsistemas.</p><a href="https://www.ons.org.br/paginas/energia-agora/reservatorios" target="_blank" rel="noopener">Reservatórios do ONS</a></section>
@@ -153,7 +153,6 @@
   </footer>
 
   <dialog id="data-dialog" class="info-dialog" aria-labelledby="data-dialog-title"><form method="dialog"><button class="close-dialog btn btn-ghost" aria-label="Fechar explicação"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button></form><h2 id="data-dialog-title">como ler os dados</h2><p><strong>Geração e carga:</strong> potência instantânea em GW.</p><p id="reading-balance"></p><p><strong>Reservatórios:</strong> o nível dos medidores representa o percentual de energia armazenada (EAR).</p><p id="reading-reservoirs"></p><p><strong>Fontes:</strong> a térmica inclui biomassa. MMGD é a estimativa de micro e minigeração distribuída.</p><a href="#fontes" id="dialog-notes-link">ver todas as notas</a></dialog>
-  <dialog id="presentation" class="presentation-dialog" aria-labelledby="slide-title"><div class="presentation-top"><span class="brand-pixel">elétrica.br</span><span id="slide-context">Economia Industrial</span><button id="close-presentation" class="btn btn-ghost"><span>Sair</span><kbd>Esc</kbd></button></div><div id="slide-stage" class="slide-stage"></div><div class="presentation-bottom"><button id="previous-slide" class="btn btn-ghost" aria-label="Slide anterior"><svg class="icon" aria-hidden="true"><use href="#i-prev"/></svg>Anterior</button><span id="slide-counter" aria-live="polite"></span><div class="slide-progress" id="slide-progress" aria-hidden="true"></div><button id="next-slide" class="btn btn-ghost">Próximo<svg class="icon" aria-hidden="true"><use href="#i-next"/></svg></button></div></dialog>
   <div id="announcer" class="sr-only" role="status" aria-live="polite"></div>
   <noscript><p class="noscript">Ative o JavaScript para explorar os dados e os capítulos. <a href="./assets/trabalho.pdf">Você pode ler o trabalho completo em PDF.</a></p></noscript>
   <svg class="icon-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><defs>

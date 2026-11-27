@@ -1,5 +1,12 @@
 export const BALANCE_URL = 'https://tr.ons.org.br/Content/GetBalancoEnergetico/null';
 export const RESERVOIR_URL = 'https://tr.ons.org.br/Content/Get/SituacaoDosReservatorios';
+export const OFFLINE = globalThis.luzOffline || null;
+
+export function assetURL(path) {
+  const [name, fragment] = path.split('#', 2);
+  const local = OFFLINE?.pdf[name];
+  return local ? local + (fragment ? '#' + fragment : '') : path;
+}
 export const REGIONS = [
   { id: 'norte', name: 'Norte', short: 'Norte' },
   { id: 'nordeste', name: 'Nordeste', short: 'Nordeste' },
@@ -67,6 +74,10 @@ export function freshness(iso, now = Date.now()) {
   return { age, stale: !Number.isFinite(age) || age > 15 * 60 * 1000 || age < -5 * 60 * 1000 };
 }
 export async function getJSON(url, timeout = 12000) {
+  if (OFFLINE) {
+    if (Object.hasOwn(OFFLINE.data, url)) return OFFLINE.data[url];
+    throw new Error('dado ausente da cópia offline');
+  }
   const response = await fetch(url, { signal: AbortSignal.timeout(timeout), cache: 'no-store' });
   if (!response.ok) throw new Error(`Fonte respondeu ${response.status}`);
   return response.json();

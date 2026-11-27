@@ -66,6 +66,7 @@
 .system-section .section-toolbar { margin-bottom: 17px; gap: 12px; flex-wrap: wrap; }
 .panorama-actions { flex-wrap: wrap; gap: 5px; }
 .panorama-byline { margin-top: 5px; font-size: 14px; }
+#offline-notice { margin-top: 5px; color: var(--faint); font: 12px/1.5 var(--mono); }
 #theme-toggle { padding-inline: 12px; }
 .reading-header .text-link { margin-bottom: 17px; }
 .bento-grid { grid-template-rows: minmax(252px, auto) minmax(136px, auto) auto auto; }
@@ -268,6 +269,7 @@ body:has(.panel-expanded) { overflow: hidden; }
 .analysis-section { margin-top: clamp(42px, 6vw, 82px); scroll-margin-top: 20px; }
 .analysis-section > h2 { font-size: clamp(23px, 3vw, 36px); margin-bottom: 15px; }
 .analysis-grid { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 14px; align-items: start; }
+#historico .analysis-grid { align-items: stretch; }
 .data-panel { padding: 18px 20px; border-color: var(--line); }
 .data-panel .panel-heading { align-items: start; flex-wrap: wrap; margin-bottom: 12px; }
 .data-panel :is(.panel-heading h2,.panel-heading h3) { font-size: 18px; letter-spacing: -.02em; text-align: left; }
@@ -327,7 +329,9 @@ body:has(.panel-expanded) { overflow: hidden; }
 .cut-panel .flow-table > div { grid-template-columns: minmax(0,1fr) auto auto; gap: 8px; font-size: 12px; }
 
 .observatory-footer { display: block; }
-.footer-main { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 16px 30px; }
+.footer-main { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: 10px 24px; }
+#offline-download { margin-top: 8px; }
+#plan-charts { margin-block: 10px 18px; }
 .site-footer .footer-main p { font-size: 13px; line-height: 1.65; }
 .site-footer .byline { color: var(--ink); }
 .footer-notes { margin-top: 20px; border-top: 1px solid var(--line); }
@@ -385,7 +389,6 @@ body:has(.panel-expanded) { overflow: hidden; }
   .ear-measure span { font-size: 11px; }
   .reservoir-panel:is(:fullscreen,.panel-expanded) .ear-meter { grid-template-columns: minmax(0,1fr); grid-template-rows: minmax(0,1fr) auto; }
   .analysis-grid,.footer-main { grid-template-columns: 1fr; }
-  .footer-main .footer-mark { grid-column: auto; }
   .data-panel { padding: 15px 12px; }
   .plan-controls { grid-template-columns: repeat(2,minmax(0,1fr)); }
   .plan-controls label:last-child { grid-column: 1 / -1; }

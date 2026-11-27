@@ -1,4 +1,4 @@
-"""Prepare browser-sized derivatives of the supplied EPE tables and Madrid PDF."""
+"""Prepare browser-sized derivatives of the supplied EPE tables."""
 
 import argparse
 import csv
@@ -8,7 +8,6 @@ from pathlib import Path
 
 import shapefile
 from openpyxl import load_workbook
-from pypdf import PdfReader
 
 SITE = Path(__file__).resolve().parents[1]
 DATA = SITE / "src" / "data"
@@ -218,28 +217,15 @@ def pne(path):
     return plan.export()
 
 
-def madrid(path):
-    reader = PdfReader(path)
-    result = []
-    for i, page in enumerate(reader.pages, start=1):
-        lines = [line.strip() for line in page.extract_text().splitlines() if line.strip()]
-        result.append({"page": i, "title": lines[0], "notes": "\n".join(lines[1:])})
-    assert len(result) == 35
-    write_json(DATA / "madrid.json", result)
-    (SITE / "src" / "assets" / "madrid-40min.pdf").write_bytes(path.read_bytes())
-
-
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--inputs", type=Path, default=SITE.parent / "proximo passo")
-    parser.add_argument("--madrid", type=Path, default=SITE.parent / "Setor_eletrico_brasileiro_Madrid_40min.pdf")
     args = parser.parse_args()
     map_data(args.inputs / "dados EPE")
     historical(args.inputs / "historico de producao.xlsx")
     plans = {"PDE 2035": pde(args.inputs / "PDE 2035"), "PNE 2055": pne(args.inputs / "PNE 2055")}
     write_json(DATA / "planos.json", plans)
     print("planos:", {name: len(metrics) for name, metrics in plans.items()})
-    madrid(args.madrid)
 
 
 if __name__ == "__main__":

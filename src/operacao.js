@@ -1,4 +1,4 @@
-import { getJSON, number, REGIONS } from './data.js';
+import { getJSON, number, REGIONS, OFFLINE } from './data.js';
 import { lineChart } from './graficos.js';
 import { editorialCase } from './texto.js';
 
@@ -117,10 +117,10 @@ export function initOperation() {
   };
   async function refresh(timestamp) {
     measuredAt = timestamp || measuredAt;
-    const clockDate = new Date(measuredAt || Date.now());
+    const clockDate = new Date(OFFLINE?.curveDate || measuredAt || Date.now());
     if (!Number.isFinite(clockDate.valueOf())) return;
     const day = localDay(clockDate);
-    if (day !== localDay(new Date())) {
+    if (!OFFLINE && day !== localDay(new Date())) {
       if (curve?.region === region) { curve.saved = true; renderCurves(); }
       else {
         $('#curve-chart').innerHTML = '<p class="chart-empty">aguardando medições do dia no ONS.</p>';
@@ -135,12 +135,12 @@ export function initOperation() {
       const entries = await Promise.all(eligible.map(async id => [
         id, parseCurve(await getJSON(endpoint + `Geracao_${regionCodes[selected]}_${id}`))
       ]));
-      if (task !== revision || day !== localDay(new Date())) return;
+      if (task !== revision || (!OFFLINE && day !== localDay(new Date()))) return;
       const t = localClock(clockDate);
       const minute = Number(t.hour) * 60 + Number(t.minute);
       const last = Math.max(...entries.flatMap(([, points]) => [...points.keys()]));
       if (last > minute + 10) throw new Error('série sem correspondência com a medição do dia');
-      curve = { parts: Object.fromEntries(entries), minute: Math.min(last,minute), day, region: selected };
+      curve = { parts: Object.fromEntries(entries), minute: Math.min(last,minute), day, region: selected, saved: Boolean(OFFLINE) };
       renderCurves();
     } catch {
       if (task !== revision) return;

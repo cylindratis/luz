@@ -8,3 +8,4 @@ node_modules/
 .openai/
 .taste-skill/
 __pycache__/
+dist/luz-offline.html

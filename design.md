@@ -283,3 +283,5 @@ Os medidores de EAR usam as silhuetas dos subsistemas da EPE. A altura da água 
 A camada de intercâmbios anima a malha existente de 500 kV ou mais de forma neutra, com setas para os sentidos medidos nos corredores. Em cada subsistema deficitário, realça um caminho ilustrativo na rede CA até a subestação de atendimento da cidade escolhida. Os filtros de tensão e de corrente atuam sobre o mapa e a animação. Os medidores de EAR são também botões de seleção de subsistema.
 
 A legenda de tensão contém a extensão nacional de referência em quilômetros. As classes que correspondem aos filtros recebem destaque e têm o subtotal informado. O mapa pulsa suavemente sobre os traçados visíveis ao filtrar a tensão ou o tipo de corrente. Com movimento reduzido, o realce é estático.
+
+Nesta revisão, o botão de apresentação abre o PDF de 30 páginas em uma nova aba. A série histórica usa uma área gráfica mais alta para acompanhar o Sankey. Os horizontes do sistema passam para um menu retraído no rodapé. A versão offline embute fontes, dados, mapas e PDFs em um arquivo HTML único e identifica as leituras salvas.

@@ -3,7 +3,7 @@ import { createReadStream } from 'node:fs';
 import { mkdir, readFile, stat } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { extname, resolve, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { firefox } from '../.firefox-qa/node_modules/playwright/index.mjs';
 import { corridors, locateCorridors } from '../dist/corredores.js';
 import { buildTransmissionNetwork, isHVDC, targets } from '../dist/rede-transmissao.js';
@@ -84,7 +84,7 @@ async function openPage(browser, width, height, fallback = false) {
     await page.waitForFunction(() => document.querySelector('.map-panel').getAttribute('aria-busy') === 'false' &&
       document.querySelector('#map-feedback').hidden && document.querySelectorAll('#reservoirs [role="meter"]').length === 4 &&
       document.querySelector('#curve-chart svg') && document.querySelector('#cut-chart .cut-total') &&
-      document.querySelector('#plan-charts').children.length === 2 && !document.querySelector('#present').disabled);
+      document.querySelector('#plan-charts').children.length === 2 && document.querySelector('#present').href.endsWith('/ecoind-1.pdf'));
   } catch (error) {
     const state = await page.locator('#map-feedback, #curve-chart, #curve-status, #cut-status, #present').allTextContents();
     throw new Error(`painéis não carregaram: ${state.join(' / ')}. erros: ${errors.join(' / ')}`, { cause: error });
@@ -109,8 +109,11 @@ try {
   console.log(`Firefox ${browser.version()} · ${process.platform}`);
   const page = await openPage(browser, 1366, 768);
   assert.equal(await page.locator('h1:visible').textContent(), 'setor elétrico brasileiro');
-  assert.equal(await page.locator('.panorama-actions a, #refresh').count(), 0);
-  assert.equal(await page.locator('.panorama-byline').textContent(), 'por guilherme v. borges e thales c. pahim');
+  assert.equal(await page.locator('.panorama-actions a:not(#present), #refresh').count(), 0);
+  assert.equal(await page.locator('.panorama-byline').textContent(), 'por guilherme v. borges');
+  assert.doesNotMatch(await page.locator('body').textContent(), /thales|pahim/i);
+  assert.equal(await page.locator('footer .footer-mark').count(), 0);
+  assert.equal(await page.locator('footer #planejamento').evaluate(el => el.open), false);
   assert.equal(await page.locator('#map-title').textContent(), 'sistema interligado nacional');
   assert.equal(await page.locator('#theme-toggle use').getAttribute('href'), '#i-sun');
   assert.equal(await page.locator('.cut-panel #live-flows').count(), 1);
@@ -249,6 +252,9 @@ try {
   await page.locator('#sankey-chart tbody').waitFor();
   await page.locator('#sankey-chart summary').click();
   await page.locator('#historico').scrollIntoViewIfNeeded();
+  const historyCards = await page.locator('#historico article').evaluateAll(cards => cards.map(card => card.getBoundingClientRect().bottom));
+  assert.ok(Math.abs(historyCards[0] - historyCards[1]) <= 1);
+  assert.match(await page.locator('#history-chart svg').getAttribute('viewBox'), /630 350$/);
   await capture(page, 'historico.png');
   for (const id of ['history', 'sankey']) {
     const button = page.locator(`#${id}-fullscreen`);
@@ -264,21 +270,24 @@ try {
   await page.locator('#reservoir-fullscreen').click();
   await page.waitForFunction(() => !document.fullscreenElement);
   const forecast = page.locator('.plan-card').last();
+  await page.locator('#planejamento > summary').click();
   await forecast.locator('.plan-metric').selectOption({ index: 3 });
   assert.ok(await forecast.locator('.plan-chart svg').isVisible());
   await page.locator('#planejamento').scrollIntoViewIfNeeded();
   await capture(page, 'planejamento.png');
 
-  await page.locator('#present').focus();
-  await page.keyboard.press('p');
-  assert.equal(await page.locator('#slide-counter').textContent(), '1 / 35');
-  await page.keyboard.press('ArrowRight');
-  assert.equal(await page.locator('#slide-counter').textContent(), '2 / 35');
-  await capture(page, 'madrid.png');
-  await page.keyboard.press('End');
-  assert.equal(await page.locator('#slide-counter').textContent(), '35 / 35');
-  await page.keyboard.press('Escape');
-  assert.equal(await page.locator('#presentation').evaluate(dialog => dialog.open), false);
+  const presentation = page.locator('#present');
+  const pdf = await page.request.get(await presentation.getAttribute('href').then(href => new URL(href, url).href));
+  assert.ok(pdf.ok());
+  assert.match(pdf.headers()['content-type'], /application\/pdf/);
+  assert.ok((await pdf.body()).equals(await readFile(resolve(root, 'assets/ecoind-1.pdf'))));
+  // Intercept only the tab test to avoid coupling it to the viewer settings of the runner.
+  await page.context().route('**/ecoind-1.pdf', route => route.fulfill({ contentType: 'text/html', body: '<title>PDF</title>' }));
+  for (const show of [() => presentation.click(), () => page.keyboard.press('p')]) {
+    const [pdfTab] = await Promise.all([page.context().waitForEvent('page'), show()]);
+    await pdfTab.waitForURL('**/ecoind-1.pdf');
+    await pdfTab.close();
+  }
   await page.locator('#data-notes').click();
   assert.match(await page.locator('#reading-balance').textContent(), /medição ONS/);
   assert.match(await page.locator('#reading-reservoirs').textContent(), /referência diária/);
@@ -323,8 +332,30 @@ try {
   await mobile.setViewportSize({ width: 320, height: 680 });
   await checkWidth(mobile);
   await mobile.close();
+
+  const offline = await browser.newContext({ offline: true, viewport: { width: 1366, height: 768 }, reducedMotion: 'reduce' });
+  const copy = await offline.newPage();
+  const external = [];
+  copy.on('request', request => { if (/^https?:/.test(request.url())) external.push(request.url()); });
+  copy.on('pageerror', error => errors.push(error.message));
+  await copy.goto(pathToFileURL(resolve(root, 'luz-offline.html')).href);
+  await copy.locator('#offline-notice').waitFor();
+  await copy.locator('#history-chart svg').waitFor();
+  await copy.locator('#curve-chart svg').waitFor();
+  assert.match(await copy.locator('#curve-status').textContent(), /última leitura disponível/);
+  await copy.locator('#map-flow-toggle').click();
+  await copy.locator('.exchange-region').first().waitFor();
+  const embeddedPDF = await copy.locator('#present').evaluate(async anchor => {
+    const result = await fetch(anchor.href);
+    const buffer = await result.arrayBuffer();
+    return { size: buffer.byteLength, format: new TextDecoder().decode(buffer.slice(0, 5)) };
+  });
+  assert.deepEqual(embeddedPDF, { size: (await stat(resolve(root, 'assets/ecoind-1.pdf'))).size, format: '%PDF-' });
+  assert.deepEqual(external, []);
+  await capture(copy, 'offline.png');
+  await offline.close();
   assert.deepEqual(errors, []);
-  console.log('Mapa, dados, temas, apresentação, rodapé e larguras verificados.');
+  console.log('Mapa, dados, temas, apresentação, rodapé, versão offline e larguras verificados.');
 } finally {
   await browser?.close();
   server.close();

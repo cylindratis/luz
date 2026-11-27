@@ -14,9 +14,8 @@ Abra `http://127.0.0.1:4173`. A pasta `dist/` está pronta para hospedagem está
 
 ## Usar na apresentação
 
-- Clique em **Apresentar** ou pressione **P**.
-- Use as setas esquerda/direita, Page Up/Page Down ou os botões para navegar pelos 35 slides do roteiro Madrid de 40 minutos.
-- **Home** e **End** vão ao primeiro e último slide. **Esc** sai.
+- Clique em **apresentar** ou pressione **P** para abrir o PDF de 30 páginas em uma nova aba.
+- Para apresentar sem internet, baixe **luz-offline.html** no rodapé e abra o arquivo no navegador. O arquivo inclui o PDF e os dados salvos.
 - No panorama, escolha um subsistema para realçar sua infraestrutura e consultar geração, carga, energia armazenada e curtailment. O mapa tem filtros, zoom, detalhes por feição e tela cheia.
 - No mapa, o botão com pulso abre os intercâmbios entre regiões, com recortes de dia e noite. As setas seguem os vértices da camada de linhas existentes da EPE, no sentido líquido medido pelo ONS para cada corredor. Abra cada região para ver a geração por fonte, a carga e o saldo. Os circuitos exibidos estão no próprio painel e no cadastro em `src/corredores.js`. Na camada cartográfica, a largura das linhas indica classes de tensão nominal em kV.
 - A malha existente de 500 kV ou mais pulsa sem direção por linha. Quando há déficit, o mapa monta uma rota ilustrativa pelas linhas CA até Recife II (Recife), Lechuga (Manaus), Gravataí (Porto Alegre) ou Tijuco Preto (São Paulo). Os filtros de tensão e CA/HVDC também se aplicam à animação. O algoritmo conecta apenas extremidades cadastradas a até 1,15 km e exibe os traçados originais.
@@ -43,13 +42,15 @@ O curtailment usa a geração não realizada apurada nas bases oficiais de eóli
 - `src/app.js`, `src/mapa.js`, `src/graficos.js`, `src/madrid.js` e `src/operacao.js`: navegação, mapa, gráficos, apresentação e consultas.
 - `src/data.js`: validação, agregação, unidades e datas.
 - `src/data/editorial.json`: síntese do PDF com páginas e ressalvas.
-- `src/assets/trabalho.pdf` e `src/assets/madrid-40min.pdf`: trabalho original e roteiro de apresentação.
+- `src/assets/trabalho.pdf` e `src/assets/ecoind-1.pdf`: trabalho original e PDF de apresentação.
 - `design.md`: plano inicial e sistema visual documentado.
 - `surface-brief.md`: contrato desta apresentação.
 
 `scripts/prepare-assets.mjs` registra a preparação inicial usando os arquivos de pesquisa na pasta superior e a malha `brazil-ibge.geojson`. Ele não precisa ser executado para compilar ou hospedar o site existente. As fontes e os dados necessários já estão em `src/`.
 
-Para regenerar as bases da atualização com os insumos originais em `../proximo passo/`, use `python scripts/prepare-observatorio.py` com `openpyxl`, `pyshp` e `pypdf`. `python scripts/prepare-curtailment.py` atualiza a cópia local dos cortes de geração.
+Para regenerar as bases da atualização com os insumos originais em `../proximo passo/`, use `python scripts/prepare-observatorio.py` com `openpyxl` e `pyshp`. `python scripts/prepare-curtailment.py` atualiza a cópia local dos cortes de geração.
+
+Após o build, `node scripts/build-offline.mjs` gera `dist/luz-offline.html` a partir dos dados incluídos. Passe `--refresh` para tentar obter leituras adicionais do ONS durante o empacotamento.
 
 Após atualizar as camadas da EPE, execute `node scripts/prepare-visuals.mjs` para refazer as silhuetas de EAR. `python scripts/prepare-intercambios.py` cruza as duas bases horárias do ONS e atualiza o último par completo de 12 horas. O fluxo do GitHub Pages repete a atualização diária e usa a leitura salva quando a consulta falha.
 

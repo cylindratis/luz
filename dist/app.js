@@ -1,8 +1,7 @@
-import { BALANCE_URL, RESERVOIR_URL, REGIONS, selectBalance, validateBalance, normalizeReservoirs, freshness, getJSON, number, sourcePower, dateTime, civilDate } from './data.js';
+import { BALANCE_URL, RESERVOIR_URL, OFFLINE, assetURL, REGIONS, selectBalance, validateBalance, normalizeReservoirs, freshness, getJSON, number, sourcePower, dateTime, civilDate } from './data.js';
 import { initMap } from './mapa.js';
 import { initHistorical, initPlans } from './graficos.js';
 import { initOperation } from './operacao.js';
-import { loadMadrid, renderMadrid } from './madrid.js';
 import { editorialCase, normalizeText } from './texto.js';
 import { initFullscreen } from './tela-cheia.js';
 
@@ -11,8 +10,7 @@ const $$ = selector => [...document.querySelectorAll(selector)];
 const esc = value => String(value ?? '').replace(/[&<>"']/g, s => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[s]));
 const icon = name => `<svg class="icon" aria-hidden="true"><use href="#i-${name}"/></svg>`;
 let rawBalance, reservoirs, editorial, currentRegion = 'brasil', balanceMode = 'loading', reservoirMode = 'loading', refreshing = false, lastReservoirQuery = 0;
-let currentChapter = 'introducao', slideIndex = 0, previousFocus;
-let madrid = [];
+let currentChapter = 'introducao';
 let reservoirShapes;
 const refreshInterval = 60000;
 const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -46,9 +44,9 @@ function renderBalance() {
   } else negativeNote?.remove();
   const prefix = state === 'saved' ? 'Leitura salva' : state === 'stale' ? 'Medição defasada' : 'Medição ONS';
   const time = `${dateTime(data.date)} (brasília)`;
-  $('#reading-balance').textContent = editorialCase(`${prefix} de ${time}. consulta automática a cada 60 s.`);
+  $('#reading-balance').textContent = editorialCase(`${prefix} de ${time}.${OFFLINE ? '' : ' consulta automática a cada 60 s.'}`);
   const notice = $('#fetch-notice');
-  notice.hidden = state === 'live';
+  notice.hidden = state === 'live' || Boolean(OFFLINE);
   if (state === 'saved') notice.textContent = `consulta ao ONS indisponível. leitura salva de ${time}.`;
   if (state === 'stale') notice.textContent = `medição do ONS defasada ou com horário incompatível. leitura de ${time}.`;
   renderFlows();
@@ -160,7 +158,7 @@ function renderChapter(id) {
   if (ch.id === 'transicao') extra = '<div class="chapter-stat"><strong>86,6</strong><span>% de renováveis em 2025</span></div><p class="stat-caption">Oferta interna de eletricidade · BEN 2026 final, citado no PDF. Valor histórico, diferente do balanço instantâneo do ONS.</p><h3>O que os números permitem dizer</h3><div class="comparison"><article><h3>26,3 GW</h3><p>Pedidos de conexão de datacenters até 2038, conforme o PDE 2035 citado no trabalho. São projetos protocolados, não consumo já instalado.</p></article><article><h3>4 GW</h3><p>Premissa de novas cargas constantes em cenário do ONS. A redução simulada de cortes é de 693 MW médios, não um resultado observado.</p></article></div><p class="caution-note">A introdução do PDF usa 86,8% da síntese do BEN; esta apresentação adota 86,6% da edição final, como o corpo e a conclusão.</p>';
   if (ch.id === 'conclusao') extra = `<blockquote>${esc(editorial.presentationClosing.statement)}</blockquote><h3>Para discutir com a turma</h3><p>${esc(editorial.presentationClosing.discussion)}</p><p class="caution-note">A pesquisa é documental e descritiva. Ela identifica mecanismos e limites, sem demonstrar causalmente redução de tarifas, emissões ou interrupções.</p>`;
   const idx = chapters.indexOf(ch), previous = chapters[idx-1], next = chapters[idx+1];
-  $('#chapter-content').innerHTML = `<h2>${esc(ch.title)}</h2><p class="chapter-lead">${esc(ch.claim)}</p><p>${esc(ch.summary)}</p>${extra}<h3>${ch.id==='introducao'?'Como a pesquisa se organiza':'Pontos para a apresentação'}</h3><ul>${ch.points.map(p=>`<li>${esc(p)}</li>`).join('')}</ul><p class="chapter-source">Síntese do trabalho original · páginas impressas ${ch.pages[0]}–${ch.pages.at(-1)} · recorte documental até 24/11/2026. <a href="./assets/trabalho.pdf#page=${ch.pages[0]+1}" target="_blank" rel="noopener">Conferir no PDF</a></p><nav class="chapter-pagination" aria-label="Avançar no trabalho">${previous ? `<a href="#trabalho/${previous.id}">Anterior: ${esc(previous.title)}</a>` : '<span></span>'}${next ? `<a href="#trabalho/${next.id}">Próximo: ${esc(next.title)}</a>` : '<a href="#fontes">Fontes e notas</a>'}</nav>`;
+  $('#chapter-content').innerHTML = `<h2>${esc(ch.title)}</h2><p class="chapter-lead">${esc(ch.claim)}</p><p>${esc(ch.summary)}</p>${extra}<h3>${ch.id==='introducao'?'Como a pesquisa se organiza':'Pontos para a apresentação'}</h3><ul>${ch.points.map(p=>`<li>${esc(p)}</li>`).join('')}</ul><p class="chapter-source">Síntese do trabalho original · páginas impressas ${ch.pages[0]}–${ch.pages.at(-1)} · recorte documental até 24/11/2026. <a href="${assetURL('./assets/trabalho.pdf#page=' + (ch.pages[0]+1))}" target="_blank" rel="noopener">Conferir no PDF</a></p><nav class="chapter-pagination" aria-label="Avançar no trabalho">${previous ? `<a href="#trabalho/${previous.id}">Anterior: ${esc(previous.title)}</a>` : '<span></span>'}${next ? `<a href="#trabalho/${next.id}">Próximo: ${esc(next.title)}</a>` : '<a href="#fontes">Fontes e notas</a>'}</nav>`;
   if (ch.id === 'estrutura') selectSegment(editorial.segments[0].id);
   normalizeText($('#chapter-content'));
 }
@@ -180,55 +178,36 @@ function route({ focus = false } = {}) {
   if (view === 'trabalho' && requested === 'trabalho') renderChapter(id || 'introducao');
   if (!section && (activeView !== view || requested === 'panorama' || view === 'trabalho')) window.scrollTo({top:0,behavior:'instant'});
   activeView = view;
-  if (requested === 'fontes') section.open = true;
+  if (requested === 'fontes' || requested === 'planejamento') section.open = true;
   if (section) requestAnimationFrame(() => section.scrollIntoView({ block: 'start' }));
   else if (focus) $('#conteudo').focus({preventScroll:true});
   const title = view==='trabalho' ? allChapters().find(c=>c.id===currentChapter)?.title || 'o trabalho' : 'setor elétrico brasileiro';
   document.title = editorialCase(`${title} | economia industrial`);
 }
 
-function slides() { return madrid; }
-
-function renderSlide() {
-  const slide = madrid[slideIndex];
-  if (!slide) return;
-  renderMadrid($('#slide-stage'), slide, closePresentation);
-  $('#slide-counter').textContent = `${slideIndex + 1} / ${madrid.length}`;
-  $('#previous-slide').disabled = slideIndex === 0;
-  $('#next-slide').disabled = slideIndex === madrid.length - 1;
-  $('#slide-progress').replaceChildren(...madrid.map((_, i) => {
-    const mark = document.createElement('span');
-    if (i <= slideIndex) mark.className = 'done';
-    return mark;
-  }));
-  $('#slide-context').textContent = slide.block;
-  $('#presentation').scrollTop = 0;
-}
-function changeSlide(delta) { const next=Math.min(Math.max(0,slideIndex+delta),slides().length-1); if(next!==slideIndex){slideIndex=next;renderSlide();$('#slide-title').focus({preventScroll:true});} }
-function openPresentation() { if(!madrid.length || document.fullscreenElement || document.querySelector('.panel-expanded'))return;previousFocus=document.activeElement;slideIndex=0;renderSlide();$('#presentation').showModal();document.body.style.overflow='hidden';$('#close-presentation').focus(); }
-function closePresentation() { $('#presentation').close();document.body.style.overflow='';previousFocus?.focus(); }
-
 document.addEventListener('click', event=>{
   const segment=event.target.closest('[data-segment]');if(segment)selectSegment(segment.dataset.segment);
 });
 document.addEventListener('keydown',event=>{
-  if($('#presentation').open){const interactive=event.target.closest('button,a,input,select,textarea,summary,[role="button"],[contenteditable]');if(event.key==='ArrowRight'||event.key==='PageDown'||(event.key===' '&&!interactive)){event.preventDefault();changeSlide(1);}if(event.key==='ArrowLeft'||event.key==='PageUp'){event.preventDefault();changeSlide(-1);}if(event.key==='Home'){event.preventDefault();slideIndex=0;renderSlide();}if(event.key==='End'){event.preventDefault();slideIndex=slides().length-1;renderSlide();}return;}
-  if(event.key.toLowerCase()==='p'&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!$('#data-dialog').open&&!event.target.closest('input,textarea,select,[contenteditable]'))openPresentation();
+  if (event.key.toLowerCase() === 'p' && !event.repeat && !event.ctrlKey && !event.metaKey && !event.altKey &&
+      !document.fullscreenElement && !$('.panel-expanded') && !$('#data-dialog').open &&
+      !event.target.closest('input,textarea,select,[contenteditable]')) {
+    event.preventDefault();
+    $('#present').click();
+  }
   const segment=event.target.closest('[data-segment]');
   if(segment&&['ArrowLeft','ArrowRight','Home','End'].includes(event.key)){event.preventDefault();const ids=editorial.segments.map(s=>s.id),idx=ids.indexOf(segment.dataset.segment);selectSegment(event.key==='Home'?ids[0]:event.key==='End'?ids.at(-1):ids[(idx+(event.key==='ArrowRight'?1:-1)+ids.length)%ids.length],true);}
 });
 $('#data-notes').addEventListener('click',()=>$('#data-dialog').showModal());
 $('#dialog-notes-link').addEventListener('click',()=>$('#data-dialog').close());
-$('#present').addEventListener('click',openPresentation);
-$('#close-presentation').addEventListener('click',closePresentation);
-$('#presentation').addEventListener('cancel',event=>{event.preventDefault();closePresentation();});
-$('#previous-slide').addEventListener('click',()=>changeSlide(-1));$('#next-slide').addEventListener('click',()=>changeSlide(1));
 window.addEventListener('hashchange',()=>route({focus:true}));
-document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshData();});
-window.addEventListener('online',()=>refreshData());
-setInterval(()=>{if(!document.hidden)refreshData();},refreshInterval);
-reducedMotion.addEventListener('change', () => { if (rawBalance) resetGenerationTimer(); });
-setInterval(()=>{if(!document.hidden)renderBalance();},30000);
+if (!OFFLINE) {
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)refreshData();});
+  window.addEventListener('online',()=>refreshData());
+  setInterval(()=>{if(!document.hidden)refreshData();},refreshInterval);
+  reducedMotion.addEventListener('change', () => { if (rawBalance) resetGenerationTimer(); });
+  setInterval(()=>{if(!document.hidden)renderBalance();},30000);
+}
 
 async function init() {
   route();
@@ -236,17 +215,16 @@ async function init() {
     getJSON('./data/balance.json').then(validateBalance).then(raw=>{rawBalance=raw;balanceMode='saved';renderBalance();}),
     getJSON('./data/reservoirs.json').then(normalizeReservoirs).then(data=>{reservoirs=data;reservoirMode='saved';renderReservoirs();}),
     getJSON('./data/editorial.json').then(data=>{editorial=data;renderEditorialNavigation();route();}),
-    loadMadrid().then(slides => { madrid = slides; $('#present').disabled = false; }),
     getJSON('./data/capacity.json').then(data=>{$('#capacity-data').innerHTML=`<div class="capacity-number">${number(data.totalMW/1000)} <small>GW</small></div><div class="capacity-rows">${data.groups.map(g=>`<div><span>${esc(g.type)} · ${esc(g.origin)}</span><strong>${number(g.mw/1000,2)} GW</strong></div>`).join('')}</div>`; normalizeText($('#capacity-data'));})
   ]);
   local.forEach((result, i) => {
     if (result.status !== 'rejected') return;
     console.warn('recurso local indisponível', i, result.reason.message);
-    if (i === 2) $('#chapter-content').innerHTML = '<p>capítulos indisponíveis. <a href="./assets/trabalho.pdf">abra o trabalho em PDF.</a></p>';
-    if (i === 3) $('#present').textContent = 'apresentação indisponível';
-    if (i === 4) $('#capacity-data').textContent = 'a leitura de capacidade não carregou. consulte a fonte abaixo.';
+    if (i === 2) $('#chapter-content').innerHTML = `<p>capítulos indisponíveis. <a href="${assetURL('./assets/trabalho.pdf')}">abra o trabalho em PDF.</a></p>`;
+    if (i === 3) $('#capacity-data').textContent = 'a leitura de capacidade não carregou. consulte a fonte abaixo.';
   });
-  await refreshData();
+  if (OFFLINE) await operation.refresh(rawBalance?.Data);
+  else await refreshData();
 }
 function setTheme(theme) {
   const light = theme === 'claro';
@@ -264,8 +242,12 @@ function setTheme(theme) {
 let savedTheme;
 try { savedTheme = localStorage.getItem('luz-tema'); } catch {}
 setTheme(savedTheme);
+if (OFFLINE) {
+  $('#offline-notice').hidden = false;
+  $('#offline-download').hidden = true;
+  $$('a[href^="./assets/"]').forEach(link => { link.href = assetURL(link.getAttribute('href')); });
+}
 $('#theme-toggle').addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'claro' ? 'eletrica' : 'claro'));
-$('#present').disabled = true;
 normalizeText(document.body);
 document.addEventListener('click', event => {
   if (!event.target.closest('a[href="#fontes"]')) return;
