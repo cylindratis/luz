@@ -1,9 +1,12 @@
 export const isHVDC = ({ attributes }) => /\b(CC|HVDC|BIPOLO)\b|±/i.test(attributes.nome || '');
 
-export function matchesLine(item, { voltage = 'all', current = 'all' } = {}) {
-  const kv = Number(item.attributes.tensao) || 0;
+export function matchesLineClass(kv, hvdc, { voltage = 'all', current = 'all' } = {}) {
   return (voltage === 'all' || (voltage === '500+' ? kv >= 500 : kv === Number(voltage))) &&
-    (current === 'all' || isHVDC(item) === (current === 'hvdc'));
+    (current === 'all' || hvdc === (current === 'hvdc'));
+}
+
+export function matchesLine(item, filters) {
+  return matchesLineClass(Number(item.attributes.tensao) || 0, isHVDC(item), filters);
 }
 
 export const targets = {

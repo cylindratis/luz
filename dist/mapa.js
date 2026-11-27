@@ -2,7 +2,7 @@ import { getJSON, number, REGIONS } from './data.js';
 import { editorialCase } from './texto.js';
 import { initFullscreen } from './tela-cheia.js';
 import { initMapFlow } from './mapa-fluxo.js';
-import { isHVDC, matchesLine } from './rede-transmissao.js';
+import { isHVDC, matchesLine, matchesLineClass } from './rede-transmissao.js';
 
 const metadataUrl = './data/mapa/camadas.json';
 const regionIds = { N: 'norte', NE: 'nordeste', 'SE-CO': 'sudesteECentroOeste', S: 'sul' };
@@ -26,6 +26,24 @@ const layerNames = { UHE: ['usinas hidrelétricas', 'water'], PCH: ['pequenas ce
   'sistemas isolados': ['sistemas isolados', 'distributed'] };
 const lineWidths = [.8, 1.05, 1.6, 2.35];
 const voltageClass = voltage => !voltage ? 0 : voltage <= 230 ? 1 : voltage < 500 ? 2 : 3;
+const transmissionLengths = [
+  [230, 70861.2], [345, 11201.8], [440, 7071.5], [500, 70756.2],
+  [525, 12364.4], [600, 12768, true], [765, 2706], [800, 9204, true]
+];
+const linePattern = item => isHVDC(item) ? [8, 3, 2, 3] : item.layer.mode === 'planejada' ? [3, 2] : [];
+
+function buildLengthTable() {
+  const table = document.createElement('table');
+  table.className = 'voltage-lengths';
+  const total = transmissionLengths.reduce((sum, [, km]) => sum + km, 0);
+  const rows = transmissionLengths.map(([kv, km, hvdc]) => `<tr>
+    <th scope="row">${hvdc ? '±' : ''}${kv} kV${hvdc ? '<small>corrente contínua</small>' : ''}</th>
+    <td>${number(km)}</td></tr>`).join('');
+  table.innerHTML = `<caption>extensão nacional de referência</caption>
+    <thead><tr><th scope="col">tensão</th><th scope="col">extensão (km)</th></tr></thead>
+    <tbody>${rows}</tbody><tfoot><tr><th scope="row">total</th><td>${number(total)}</td></tr></tfoot>`;
+  return table;
+}
 
 function makePath(parts) {
   const path = new Path2D();
@@ -72,6 +90,8 @@ function distanceToLine(parts, x, y, limit) {
 export function initMap(selectRegion) {
   const canvas = document.querySelector('#grid-map');
   const ctx = canvas.getContext('2d');
+  const highlight = document.querySelector('#voltage-highlight');
+  const focusCtx = highlight.getContext('2d');
   const panel = canvas.closest('.map-panel');
   const wrap = canvas.parentElement;
   const feedback = document.querySelector('#map-feedback');
@@ -83,6 +103,9 @@ export function initMap(selectRegion) {
   const feature = document.querySelector('#map-feature');
   const fullButton = document.querySelector('#map-fullscreen');
   const layersDisclosure = menu.closest('details');
+  let lengthTable, lengthStatus;
+  const readFilters = () => ({ voltage: mapVoltage.value, current: mapCurrent.value });
+  const filterEnabled = ({ voltage, current }) => voltage !== 'all' || current !== 'all';
   let legendBeforeFlow;
   const flow = initMapFlow(panel, active => {
     if (active) legendBeforeFlow = layersDisclosure.open;
@@ -151,8 +174,7 @@ export function initMap(selectRegion) {
         ctx.strokeStyle = ctx.fillStyle = color(item.layer.mode === 'planejada' ? '--map-planned' : layerColors[item.layer.name]);
         if (item.layer.kind === 'line') {
           ctx.lineWidth = lineWidths[voltageClass(item.attributes.tensao)] / scale;
-          const pattern = isHVDC(item) ? [8, 3, 2, 3] : item.layer.mode === 'planejada' ? [3, 2] : [];
-          ctx.setLineDash(pattern.map(step => step / scale));
+          ctx.setLineDash(linePattern(item).map(step => step / scale));
           ctx.stroke(item.path);
         } else {
           const radius = (zoom > 2 ? 2.7 : 1.8) / scale;
@@ -173,7 +195,53 @@ export function initMap(selectRegion) {
     }
     ctx.globalAlpha = 1;
     ctx.setLineDash([]);
+    drawHighlight(width, height, ratio, active, color);
     flow.sync({ width, height, ratio, scale, left, top }, color);
+  }
+
+  function drawHighlight(width, height, ratio, active, color) {
+    const filters = readFilters();
+    const lines = filterEnabled(filters) ? visible.filter(item => item.layer.kind === 'line' && matchesLine(item, filters)) : [];
+    highlight.hidden = !lines.length || !focusCtx;
+    if (highlight.hidden) return;
+    if (highlight.width !== canvas.width) highlight.width = canvas.width;
+    if (highlight.height !== canvas.height) highlight.height = canvas.height;
+    const { scale, left, top } = camera;
+    focusCtx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    focusCtx.clearRect(0, 0, width, height);
+    focusCtx.transform(scale, 0, 0, scale, left, top);
+    focusCtx.lineJoin = 'round';
+    const accent = color('--flow-line'), planned = color('--map-planned');
+    const stroke = () => {
+      for (const line of lines) {
+        focusCtx.strokeStyle = line.layer.mode === 'planejada' ? planned : accent;
+        focusCtx.lineWidth = (lineWidths[voltageClass(line.attributes.tensao)] + .65) / scale;
+        focusCtx.setLineDash(linePattern(line).map(step => step / scale));
+        focusCtx.stroke(line.path);
+      }
+    };
+    focusCtx.globalAlpha = region === 'brasil' ? 1 : .27;
+    stroke();
+    if (region !== 'brasil') {
+      focusCtx.save();
+      focusCtx.clip(active, 'evenodd');
+      focusCtx.globalAlpha = 1;
+      stroke();
+      focusCtx.restore();
+    }
+  }
+
+  function updateLengthLegend() {
+    if (!lengthTable) return;
+    const filters = readFilters(), filtered = filterEnabled(filters);
+    let sum = 0;
+    transmissionLengths.forEach(([kv, km, hvdc], i) => {
+      const selected = filtered && matchesLineClass(kv, Boolean(hvdc), filters);
+      lengthTable.tBodies[0].rows[i].classList.toggle('voltage-match', selected);
+      if (selected) sum += km;
+    });
+    lengthStatus.hidden = !filtered;
+    lengthStatus.textContent = sum ? `subtotal de referência: ${number(sum)} km` : 'extensão de referência indisponível para este filtro.';
   }
 
   function loadLayer(layer) {
@@ -204,7 +272,7 @@ export function initMap(selectRegion) {
     feedback.hidden = true;
     const results = await Promise.allSettled(chosen.map(loadLayer));
     if (token !== revision) return;
-    const filters = { voltage: mapVoltage.value, current: mapCurrent.value };
+    const filters = readFilters();
     visible = chosen.flatMap(layer => (loaded.get(layer.id) || []).filter(item => layer.kind !== 'line' || matchesLine(item, filters)));
     const failures = results.filter(x => x.status === 'rejected').length;
     showFeedback(failures === 1 ? 'uma camada indisponível' : failures ? `${failures} camadas indisponíveis` : '');
@@ -328,7 +396,8 @@ export function initMap(selectRegion) {
     control.addEventListener('change', () => {
       updateTooltip(control, name);
       showFeature(null);
-      flow.setFilters({ voltage: mapVoltage.value, current: mapCurrent.value });
+      updateLengthLegend();
+      flow.setFilters(readFilters());
       renderLayers();
     });
   }
@@ -373,6 +442,12 @@ export function initMap(selectRegion) {
     voltage.innerHTML = '<p>tensão nominal</p>' + ['sem valor informado', 'até 230 kV', '231 a 499 kV', '500 kV ou mais']
       .map((name, i) => `<span><i aria-hidden="true" style="--line-weight:${lineWidths[i]}px"></i>${name}</span>`).join('') +
       '<span class="hvdc-key"><i aria-hidden="true"></i>HVDC · corrente contínua</span>';
+    lengthTable = buildLengthTable();
+    lengthStatus = document.createElement('p');
+    lengthStatus.className = 'voltage-length-status';
+    lengthStatus.setAttribute('role', 'status');
+    voltage.append(lengthTable, lengthStatus);
+    updateLengthLegend();
     menu.append(voltage);
     await renderLayers();
   }).catch(() => showFeedback('mapa indisponível no momento'));

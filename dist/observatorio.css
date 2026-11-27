@@ -87,7 +87,12 @@
 #map-title { margin-inline-end: auto; font-size: 18px; text-align: left; }
 .map-panel .map-wrap { min-height: 300px; margin: 0; }
 #grid-map { display: block; position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; }
-#flow-map { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#flow-map,#voltage-highlight { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+#voltage-highlight:not([hidden]) { opacity: .7; animation: voltage-breath 3.8s ease-in-out infinite; }
+@keyframes voltage-breath { 0%,100% { opacity: .35; } 50% { opacity: .9; } }
+@media (prefers-reduced-motion: reduce) {
+  #voltage-highlight:not([hidden]) { animation: none; }
+}
 .map-panel:has(#map-flow-toggle[aria-pressed="true"]) #grid-map:not(:focus-visible) { opacity: .65; }
 #grid-map:active { cursor: grabbing; }
 #grid-map:focus-visible { outline: 2px solid var(--plot-blue); outline-offset: -3px; }
@@ -139,11 +144,21 @@ select { max-width: 100%; text-overflow: ellipsis; cursor: pointer; }
 #map-layers[data-mode="planejada"] label[data-kind="point"]:not(.legend-neutral) i { background: var(--map-planned); }
 #map-layers:not([data-mode="todas"]) .planned-key { display: none; }
 #map-layers input { accent-color: var(--plot-blue); }
-.voltage-key { display: grid; gap: 6px; margin-top: 8px; padding: 9px 4px 5px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+.voltage-key { display: grid; grid-column: 1 / -1; gap: 6px; margin-top: 8px; padding: 9px 4px 5px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
 .voltage-key p { color: var(--ink); font-weight: 650; }
 .voltage-key span { display: flex; gap: 8px; align-items: center; }
 #map-layers .voltage-key i { width: 20px; height: max(1px,var(--line-weight)); background: var(--map-line); }
 #map-layers .hvdc-key i { height: 2px; background: repeating-linear-gradient(to right,var(--map-line) 0 7px,transparent 7px 10px,var(--map-line) 10px 12px,transparent 12px 15px); }
+.voltage-lengths { width: 100%; border-collapse: collapse; margin-top: 6px; color: var(--ink); }
+.voltage-lengths caption { text-align: left; margin-bottom: 5px; font-weight: 650; }
+.voltage-lengths :is(th,td) { padding: 4px 5px; border-bottom: 1px solid var(--line); }
+.voltage-lengths th { text-align: left; font-weight: 500; }
+.voltage-lengths td,.voltage-lengths thead th:last-child { text-align: right; white-space: nowrap; }
+.voltage-lengths td { font-family: var(--mono); font-variant-numeric: tabular-nums; }
+.voltage-lengths small { display: block; color: var(--muted); font-size: 11px; }
+.voltage-lengths tfoot :is(th,td) { font-weight: 700; }
+.voltage-lengths tr.voltage-match { background: var(--raised); color: var(--plot-blue); }
+.voltage-key .voltage-length-status { font-weight: 500; color: var(--muted); }
 .map-flow-panel { min-width: 0; background: var(--surface); }
 .map-panel:not(:fullscreen,.panel-expanded) .map-flow-panel { position: absolute; top: 62px; right: 12px; width: min(262px,calc(100% - 24px)); max-height: calc(100% - 118px); overflow: auto; padding: 12px; border: 1px solid var(--line); border-radius: 8px; }
 .map-flow-panel h3 { font-size: 14px; text-align: left; }
